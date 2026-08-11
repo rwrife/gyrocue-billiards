@@ -26,8 +26,15 @@ To move quickly, this project is planned as a **Unity-based mobile app** (iOS-fi
 - Lightweight networking for sensor streaming (WebSocket or UDP over LAN)
 - State machine for turns and rules
 
+## Unity Baseline (Issue #1)
+- **Unity editor version:** `2022.3.40f1` (documented in `ProjectSettings/ProjectVersion.txt`)
+- **Core project folders:** `Assets/Scenes`, `Assets/Scripts`, `Assets/Prefabs`, `Assets/Tests`
+- **Seed runtime script:** `Assets/Scripts/Core/GameBootstrap.cs`
+- **Seed edit-mode test:** `Assets/Tests/EditMode/BootstrapTests.cs`
+- **Packages manifest:** `Packages/manifest.json`
+
 ## Status
-Planning and scaffolding phase.
+Initial Unity mobile-first scaffold is now in-repo; gameplay systems are next.
 
 ## License
 TBD
