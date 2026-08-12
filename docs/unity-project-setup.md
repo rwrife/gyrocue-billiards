@@ -22,6 +22,12 @@ This repository now includes a Unity-ready baseline scaffold.
 
 ## Next Recommended Steps
 
-1. Create `Assets/Scenes/MainTable.unity` and wire `GameBootstrap`.
-2. Add first-pass touch aim + swipe shot scripts under `Assets/Scripts/Input`.
+1. Add first-pass touch aim + swipe shot scripts under `Assets/Scripts/Input`.
+2. Replace `MainTable` placeholders with colliders/sprites/materials for playable geometry.
 3. Add deterministic gameplay logic tests under `Assets/Tests/EditMode`.
+
+## Recently Completed
+
+- `Assets/Scenes/MainTable.unity` scaffold added with camera + table placeholder hierarchy.
+- `Assets/Scripts/Core/TableLayoutConstants.cs` added for shared layout sizing and aspect-fit camera math.
+- `docs/main-table-scene-layout.md` documents initial coordinates/object layout.
