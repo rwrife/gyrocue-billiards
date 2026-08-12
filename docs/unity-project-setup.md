@@ -22,12 +22,14 @@ This repository now includes a Unity-ready baseline scaffold.
 
 ## Next Recommended Steps
 
-1. Add first-pass touch aim + swipe shot scripts under `Assets/Scripts/Input`.
+1. Wire `TouchAimSwipeController.ShotReleased` into cue-ball force application once physics tuning lands.
 2. Replace `MainTable` placeholders with colliders/sprites/materials for playable geometry.
-3. Add deterministic gameplay logic tests under `Assets/Tests/EditMode`.
+3. Add deterministic gameplay logic tests for turn transitions and foul handling.
 
 ## Recently Completed
 
 - `Assets/Scenes/MainTable.unity` scaffold added with camera + table placeholder hierarchy.
 - `Assets/Scripts/Core/TableLayoutConstants.cs` added for shared layout sizing and aspect-fit camera math.
 - `docs/main-table-scene-layout.md` documents initial coordinates/object layout.
+- `Assets/Scripts/Input/TouchAimSwipeController.cs` added for drag-to-aim + swipe-shot controls.
+- `Assets/Tests/EditMode/TouchAimSwipeControllerTests.cs` and `TouchShotMathTests.cs` added for touch input behavior coverage.

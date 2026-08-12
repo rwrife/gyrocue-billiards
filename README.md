@@ -34,7 +34,7 @@ To move quickly, this project is planned as a **Unity-based mobile app** (iOS-fi
 - **Packages manifest:** `Packages/manifest.json`
 
 ## Status
-Unity mobile-first scaffold is in-repo, including the first `MainTable.unity` scene layout with camera framing + cushion/pocket placeholders. Gameplay systems are next.
+Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout and first-pass touch aim + swipe-shot input scripts now landed; gameplay force integration and rules systems are next.
 
 ## License
 TBD

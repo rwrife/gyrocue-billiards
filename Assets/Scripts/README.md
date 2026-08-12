@@ -2,9 +2,12 @@
 
 Runtime gameplay scripts live here.
 
-- `Core/` for foundational game services and bootstrap code
+- `Core/` for foundational game services and bootstrap code.
   - `GameBootstrap.cs` sets mobile runtime defaults.
   - `TableLayoutConstants.cs` centralizes table dimensions and camera-fit math.
-- Future adapters:
-  - `Input/TouchInputAdapter`
-  - `Input/RemoteSensorInputAdapter`
+- `Input/` for player input adapters and shot-intent composition.
+  - `TouchAimSwipeController.cs` handles drag-to-aim + pull/release shot gestures.
+  - `TouchShotMath.cs` exposes testable aim/power helpers.
+  - `ShotCommand.cs` defines normalized shot payloads for downstream systems.
+- Planned follow-up adapters:
+  - `RemoteSensorInputAdapter` for optional dual-phone cue mode.
