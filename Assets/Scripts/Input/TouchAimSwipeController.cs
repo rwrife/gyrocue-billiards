@@ -41,6 +41,8 @@ namespace GyroCue.Input
 
         public bool InputLocked => ballsAreMoving;
 
+        public bool TouchInputEnabled => touchInputEnabled;
+
         public float PreviewPower01
         {
             get
@@ -57,6 +59,15 @@ namespace GyroCue.Input
         {
             ballsAreMoving = areMoving;
             if (areMoving)
+            {
+                CancelGesture();
+            }
+        }
+
+        public void SetTouchInputEnabled(bool enabled)
+        {
+            touchInputEnabled = enabled;
+            if (!enabled)
             {
                 CancelGesture();
             }

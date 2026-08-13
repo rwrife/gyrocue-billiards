@@ -58,5 +58,34 @@ namespace GyroCue.Tests.EditMode
                 Object.DestroyImmediate(root);
             }
         }
+
+        [Test]
+        public void SetTouchInputEnabled_FalseSuppressesTouchesUntilReEnabled()
+        {
+            var root = new GameObject("touch-controller-enable-test");
+
+            try
+            {
+                var controller = root.AddComponent<TouchAimSwipeController>();
+
+                controller.SetTouchInputEnabled(false);
+                Assert.That(controller.TouchInputEnabled, Is.False);
+
+                var didRelease = controller.ProcessTouchPhase(TouchPhase.Began, new Vector2(100f, 100f), 3, out _);
+                Assert.That(didRelease, Is.False);
+
+                controller.SetTouchInputEnabled(true);
+                Assert.That(controller.TouchInputEnabled, Is.True);
+
+                controller.ProcessTouchPhase(TouchPhase.Began, new Vector2(100f, 100f), 3, out _);
+                controller.ProcessTouchPhase(TouchPhase.Moved, new Vector2(220f, 100f), 3, out _);
+                didRelease = controller.ProcessTouchPhase(TouchPhase.Ended, new Vector2(20f, 100f), 3, out _);
+                Assert.That(didRelease, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
     }
 }

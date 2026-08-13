@@ -71,7 +71,28 @@ A frame is accepted only when:
 - `sequence >= 0`
 - all numeric components are finite (not `NaN`/`Infinity`)
 
-Reference runtime helpers implementing this contract:
+## Unity runtime mapping (Issue #13)
+
+The game-side adapter that converts sensor frames into cue aim + shot commands is:
+
+- `Assets/Scripts/Input/RemoteSensorInputAdapter.cs`
+
+Key tunables are exposed as serialized fields for per-device balancing:
+
+- `aimDeadzoneDegrees` — ignores tiny orientation jitter.
+- `aimSensitivity` — scales lateral orientation response.
+- `shotTriggerAccelerationMps2` — forward-acceleration threshold required to fire.
+- `shotTriggerRearmAccelerationMps2` — release/rearm threshold to prevent repeated fire spam.
+- `shotPowerSensitivity` — maps trigger-overdrive acceleration to normalized shot power.
+- `frameTimeoutSeconds` — marks remote control inactive when stream freshness is lost.
+
+Touch fallback is coordinated by:
+
+- `Assets/Scripts/Input/CueInputCoordinator.cs`
+
+When remote frames go stale, touch input is re-enabled automatically so fallback is immediate.
+
+Reference runtime helpers implementing the wire contract:
 
 - `Assets/Scripts/Input/RemoteCueProtocol.cs`
 - `Assets/Scripts/Input/RemoteCueSensorFrame.cs`
