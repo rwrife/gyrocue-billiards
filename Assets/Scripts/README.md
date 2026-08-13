@@ -14,5 +14,8 @@ Runtime gameplay scripts live here.
   - `TouchAimSwipeController.cs` handles drag-to-aim + pull/release shot gestures.
   - `TouchShotMath.cs` exposes testable aim/power helpers.
   - `ShotCommand.cs` defines normalized shot payloads for downstream systems.
+  - `RemoteCueProtocol.cs` centralizes schema version + default LAN transport endpoints for dual-phone mode.
+  - `RemoteCueSensorFrame.cs` defines validated timestamp/orientation/acceleration/gyro payloads.
+  - `RemoteCueSensorFrameJson.cs` parses/serializes protocol JSON for network adapters.
 - Planned follow-up adapters:
   - `RemoteSensorInputAdapter` for optional dual-phone cue mode.

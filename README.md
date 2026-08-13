@@ -34,7 +34,7 @@ To move quickly, this project is planned as a **Unity-based mobile app** (iOS-fi
 - **Packages manifest:** `Packages/manifest.json`
 
 ## Status
-Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, a foundational turn state machine, centralized pool physics tuning helpers, and baseline pocket-detection/rules signaling scripts now landed; next up are foul specifics, full pocket integration in-scene, and HUD polish.
+Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, a foundational turn state machine, centralized pool physics tuning helpers, baseline pocket-detection/rules signaling scripts, and a documented dual-phone sensor packet protocol contract now landed; next up are foul specifics, full pocket integration in-scene, and HUD polish.
 
 ## CI Pipeline (Issue #15)
 A GitHub Actions workflow now lives at `.github/workflows/unity-ci.yml` and runs on push + pull request.
