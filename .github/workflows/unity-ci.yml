@@ -1,0 +1,189 @@
+name: Unity CI
+
+on:
+  pull_request:
+  push:
+
+concurrency:
+  group: unity-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  detect-test-suites:
+    name: Detect Unity test suites
+    runs-on: ubuntu-latest
+    outputs:
+      has_editmode: ${{ steps.detect.outputs.has_editmode }}
+      has_playmode: ${{ steps.detect.outputs.has_playmode }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect EditMode/PlayMode tests
+        id: detect
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          has_editmode=false
+          has_playmode=false
+
+          if find Assets/Tests/EditMode -type f -name '*.cs' 2>/dev/null | grep -q .; then
+            has_editmode=true
+          fi
+
+          if find Assets/Tests/PlayMode -type f -name '*.cs' 2>/dev/null | grep -q .; then
+            has_playmode=true
+          fi
+
+          echo "has_editmode=${has_editmode}" >> "$GITHUB_OUTPUT"
+          echo "has_playmode=${has_playmode}" >> "$GITHUB_OUTPUT"
+
+  project-sanity:
+    name: Project sanity checks
+    runs-on: ubuntu-latest
+    needs: detect-test-suites
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate Unity project essentials
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f ProjectSettings/ProjectVersion.txt
+          grep -q '^m_EditorVersion:' ProjectSettings/ProjectVersion.txt
+
+          test -f Packages/manifest.json
+          jq -e . Packages/manifest.json >/dev/null
+
+          for path in Assets/Scripts Assets/Scenes Assets/Tests; do
+            test -d "$path"
+          done
+
+          echo "Project sanity checks passed."
+
+  unity-editmode-tests:
+    name: Unity EditMode tests
+    runs-on: ubuntu-latest
+    needs: detect-test-suites
+    if: ${{ secrets.UNITY_LICENSE != '' && needs.detect-test-suites.outputs.has_editmode == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run EditMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          testMode: editmode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload EditMode artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-editmode-artifacts
+          path: artifacts
+
+  unity-playmode-tests:
+    name: Unity PlayMode tests
+    runs-on: ubuntu-latest
+    needs: detect-test-suites
+    if: ${{ secrets.UNITY_LICENSE != '' && needs.detect-test-suites.outputs.has_playmode == 'true' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run PlayMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          testMode: playmode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload PlayMode artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-playmode-artifacts
+          path: artifacts
+
+  unity-tests-note:
+    name: Unity tests note (license/test coverage)
+    runs-on: ubuntu-latest
+    needs: detect-test-suites
+    if: ${{ secrets.UNITY_LICENSE == '' || needs.detect-test-suites.outputs.has_playmode != 'true' || needs.detect-test-suites.outputs.has_editmode != 'true' }}
+    steps:
+      - name: Explain skipped Unity jobs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${{ secrets.UNITY_LICENSE }}" ]; then
+            echo "UNITY_LICENSE is not set, so Unity runner jobs were skipped."
+          fi
+          if [ "${{ needs.detect-test-suites.outputs.has_editmode }}" != "true" ]; then
+            echo "No EditMode .cs tests were detected."
+          fi
+          if [ "${{ needs.detect-test-suites.outputs.has_playmode }}" != "true" ]; then
+            echo "No PlayMode .cs tests were detected."
+          fi
+
+  ios-build-check:
+    name: iOS build check
+    runs-on: ubuntu-latest
+    needs:
+      - project-sanity
+      - detect-test-suites
+    if: ${{ secrets.UNITY_LICENSE != '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build iOS player
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          targetPlatform: iOS
+
+      - name: Upload iOS build artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-artifacts
+          path: build
+
+  ios-build-sanity-fallback:
+    name: iOS build sanity fallback (no Unity license)
+    runs-on: ubuntu-latest
+    needs: project-sanity
+    if: ${{ secrets.UNITY_LICENSE == '' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate iOS-oriented project settings presence
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          test -f ProjectSettings/ProjectVersion.txt
+          test -f Packages/manifest.json
+
+          echo "UNITY_LICENSE missing; ran iOS sanity fallback instead of full Unity build."

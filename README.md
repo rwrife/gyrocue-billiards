@@ -36,5 +36,18 @@ To move quickly, this project is planned as a **Unity-based mobile app** (iOS-fi
 ## Status
 Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, and a foundational turn state machine now landed; next up are gameplay force integration, foul specifics, and HUD polish.
 
+## CI Pipeline (Issue #15)
+A GitHub Actions workflow now lives at `.github/workflows/unity-ci.yml` and runs on push + pull request.
+
+- **Project sanity checks** always run (manifest/structure/version validation).
+- **Unity EditMode/PlayMode jobs** are configured via `game-ci/unity-test-runner` and run when `UNITY_LICENSE` is available.
+- **iOS build check** is configured via `game-ci/unity-builder` (target platform `iOS`) and runs when `UNITY_LICENSE` is available.
+- If Unity license secrets are missing on the repo, the workflow still runs with explicit fallback notes/sanity checks instead of silently passing.
+
+Expected repository secrets for full Unity execution:
+- `UNITY_LICENSE`
+- `UNITY_EMAIL` (if your license flow requires credentials)
+- `UNITY_PASSWORD` (if your license flow requires credentials)
+
 ## License
 TBD
