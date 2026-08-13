@@ -1,0 +1,78 @@
+# Dual-phone cue sensor protocol (Issue #10)
+
+This document defines the wire contract between the optional companion phone (sensor source) and the game phone (Unity table app).
+
+## Versioning
+
+- **Schema version:** `gyrocue.sensor.v1`
+- Packets with unknown schema versions must be ignored by the receiver.
+
+## Transport choice
+
+Primary + fallback transport options are supported:
+
+1. **UDP over LAN (default)**
+   - Lowest overhead/latency for high-rate motion streaming.
+   - Best for continuous orientation/accel/gyro frames where occasional packet loss is acceptable.
+   - **Port:** `28745`
+
+2. **WebSocket over LAN (fallback/debug)**
+   - Easier to inspect with standard tooling and browser/dev-server stacks.
+   - Useful for debugging and early integration while preserving the same packet schema.
+   - **Endpoint:** `ws://<host>:28746/gyrocue/v1/sensor`
+
+## Packet schema (`gyrocue.sensor.v1`)
+
+Each packet is a single JSON object:
+
+| Field | Type | Units | Notes |
+|---|---|---:|---|
+| `schemaVersion` | string | n/a | Must be `gyrocue.sensor.v1` |
+| `timestampUnixMs` | integer (int64) | milliseconds | Sender wall-clock timestamp (Unix epoch ms) |
+| `sequence` | integer (int64) | count | Monotonic frame counter per session |
+| `orientation` | object `{x,y,z,w}` | unit quaternion | Device attitude in sender device frame |
+| `accelerationMps2` | object `{x,y,z}` | m/s² | Linear acceleration vector |
+| `angularVelocityRadPerSec` | object `{x,y,z}` | rad/s | Gyroscope angular velocity |
+
+## Example payloads
+
+### UDP datagram payload example
+
+```json
+{
+  "schemaVersion": "gyrocue.sensor.v1",
+  "timestampUnixMs": 1723600000123,
+  "sequence": 241,
+  "orientation": { "x": 0.0000, "y": 0.2588, "z": 0.0000, "w": 0.9659 },
+  "accelerationMps2": { "x": 0.12, "y": -9.71, "z": 0.06 },
+  "angularVelocityRadPerSec": { "x": 0.04, "y": 0.10, "z": -0.03 }
+}
+```
+
+### WebSocket text-frame payload example
+
+```json
+{
+  "schemaVersion": "gyrocue.sensor.v1",
+  "timestampUnixMs": 1723600000456,
+  "sequence": 242,
+  "orientation": { "x": 0.0021, "y": 0.2611, "z": -0.0017, "w": 0.9653 },
+  "accelerationMps2": { "x": 0.08, "y": -9.74, "z": 0.01 },
+  "angularVelocityRadPerSec": { "x": 0.02, "y": 0.07, "z": -0.01 }
+}
+```
+
+## Receiver validation rules
+
+A frame is accepted only when:
+
+- `schemaVersion == "gyrocue.sensor.v1"`
+- `timestampUnixMs > 0`
+- `sequence >= 0`
+- all numeric components are finite (not `NaN`/`Infinity`)
+
+Reference runtime helpers implementing this contract:
+
+- `Assets/Scripts/Input/RemoteCueProtocol.cs`
+- `Assets/Scripts/Input/RemoteCueSensorFrame.cs`
+- `Assets/Scripts/Input/RemoteCueSensorFrameJson.cs`
