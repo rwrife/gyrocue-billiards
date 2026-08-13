@@ -18,6 +18,7 @@ jobs:
     outputs:
       has_editmode: ${{ steps.detect.outputs.has_editmode }}
       has_playmode: ${{ steps.detect.outputs.has_playmode }}
+      has_unity_license: ${{ steps.detect.outputs.has_unity_license }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,11 +26,18 @@ jobs:
       - name: Detect EditMode/PlayMode tests
         id: detect
         shell: bash
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         run: |
           set -euo pipefail
 
           has_editmode=false
           has_playmode=false
+          has_unity_license=false
+
+          if [ -n "${UNITY_LICENSE:-}" ]; then
+            has_unity_license=true
+          fi
 
           if find Assets/Tests/EditMode -type f -name '*.cs' 2>/dev/null | grep -q .; then
             has_editmode=true
@@ -41,6 +49,7 @@ jobs:
 
           echo "has_editmode=${has_editmode}" >> "$GITHUB_OUTPUT"
           echo "has_playmode=${has_playmode}" >> "$GITHUB_OUTPUT"
+          echo "has_unity_license=${has_unity_license}" >> "$GITHUB_OUTPUT"
 
   project-sanity:
     name: Project sanity checks
@@ -71,7 +80,7 @@ jobs:
     name: Unity EditMode tests
     runs-on: ubuntu-latest
     needs: detect-test-suites
-    if: ${{ secrets.UNITY_LICENSE != '' && needs.detect-test-suites.outputs.has_editmode == 'true' }}
+    if: ${{ needs['detect-test-suites'].outputs.has_unity_license == 'true' && needs['detect-test-suites'].outputs.has_editmode == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -98,7 +107,7 @@ jobs:
     name: Unity PlayMode tests
     runs-on: ubuntu-latest
     needs: detect-test-suites
-    if: ${{ secrets.UNITY_LICENSE != '' && needs.detect-test-suites.outputs.has_playmode == 'true' }}
+    if: ${{ needs['detect-test-suites'].outputs.has_unity_license == 'true' && needs['detect-test-suites'].outputs.has_playmode == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -125,19 +134,19 @@ jobs:
     name: Unity tests note (license/test coverage)
     runs-on: ubuntu-latest
     needs: detect-test-suites
-    if: ${{ secrets.UNITY_LICENSE == '' || needs.detect-test-suites.outputs.has_playmode != 'true' || needs.detect-test-suites.outputs.has_editmode != 'true' }}
+    if: ${{ needs['detect-test-suites'].outputs.has_unity_license != 'true' || needs['detect-test-suites'].outputs.has_playmode != 'true' || needs['detect-test-suites'].outputs.has_editmode != 'true' }}
     steps:
       - name: Explain skipped Unity jobs
         shell: bash
         run: |
           set -euo pipefail
-          if [ -z "${{ secrets.UNITY_LICENSE }}" ]; then
+          if [ "${{ needs['detect-test-suites'].outputs.has_unity_license }}" != "true" ]; then
             echo "UNITY_LICENSE is not set, so Unity runner jobs were skipped."
           fi
-          if [ "${{ needs.detect-test-suites.outputs.has_editmode }}" != "true" ]; then
+          if [ "${{ needs['detect-test-suites'].outputs.has_editmode }}" != "true" ]; then
             echo "No EditMode .cs tests were detected."
           fi
-          if [ "${{ needs.detect-test-suites.outputs.has_playmode }}" != "true" ]; then
+          if [ "${{ needs['detect-test-suites'].outputs.has_playmode }}" != "true" ]; then
             echo "No PlayMode .cs tests were detected."
           fi
 
@@ -147,7 +156,7 @@ jobs:
     needs:
       - project-sanity
       - detect-test-suites
-    if: ${{ secrets.UNITY_LICENSE != '' }}
+    if: ${{ needs['detect-test-suites'].outputs.has_unity_license == 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -172,8 +181,10 @@ jobs:
   ios-build-sanity-fallback:
     name: iOS build sanity fallback (no Unity license)
     runs-on: ubuntu-latest
-    needs: project-sanity
-    if: ${{ secrets.UNITY_LICENSE == '' }}
+    needs:
+      - project-sanity
+      - detect-test-suites
+    if: ${{ needs['detect-test-suites'].outputs.has_unity_license != 'true' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
