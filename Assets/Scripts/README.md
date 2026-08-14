@@ -17,5 +17,5 @@ Runtime gameplay scripts live here.
   - `RemoteCueProtocol.cs` centralizes schema version + default LAN transport endpoints for dual-phone mode.
   - `RemoteCueSensorFrame.cs` defines validated timestamp/orientation/acceleration/gyro payloads.
   - `RemoteCueSensorFrameJson.cs` parses/serializes protocol JSON for network adapters.
-- Planned follow-up adapters:
-  - `RemoteSensorInputAdapter` for optional dual-phone cue mode.
+  - `RemoteSensorInputAdapter.cs` maps second-phone orientation/acceleration frames into aim + shot commands.
+  - `CueInputCoordinator.cs` gates touch-vs-remote control and keeps touch fallback instant when remote frames go stale.
