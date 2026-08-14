@@ -19,6 +19,15 @@ This document describes the first-pass single-phone control path implemented in 
 
 `SetBallsMoving(true)` locks controls and cancels any active gesture so users cannot queue overlapping shots while balls are still moving.
 
+## Cue visualization (Issue #5)
+
+`CuePreviewVisualizer` provides the first-pass shot preview layer.
+
+- Draws a `LineRenderer` trajectory preview from cue ball anchor in real time.
+- Optionally shows a cue indicator transform aligned to the current aim direction.
+- Prefers fresh remote-sensor aim vectors when dual-phone input is active, otherwise uses touch aim.
+- Hides preview visuals while shot simulation is active (`SetBallsMoving(true)`), then restores once play returns to aiming.
+
 ## Follow-up integration
 
 - Connect `ShotReleased` to cue-ball impulse application when physics issue work lands.
