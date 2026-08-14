@@ -85,12 +85,22 @@ Key tunables are exposed as serialized fields for per-device balancing:
 - `shotTriggerRearmAccelerationMps2` — release/rearm threshold to prevent repeated fire spam.
 - `shotPowerSensitivity` — maps trigger-overdrive acceleration to normalized shot power.
 - `frameTimeoutSeconds` — marks remote control inactive when stream freshness is lost.
+- `calibrationSampleTarget` — number of frames to average during stacked-phone calibration.
+- `calibrationMaxDurationSeconds` — hard cap for calibration completion (clamped below 10s).
 
-Touch fallback is coordinated by:
+## Calibration flow (Issue #12)
+
+The remote adapter now supports a quick alignment flow that compensates frame offsets between the cue phone and table phone.
+
+1. Player opens pause/settings and taps **Recalibrate cue phone**.
+2. UI calls `CueInputCoordinator.BeginRemoteCalibration()`.
+3. While calibration is in progress, touch fallback remains enabled (remote lock is temporarily released).
+4. After enough samples arrive before timeout, the adapter computes a calibration offset and marks state as `Calibrated`.
+5. If calibration exceeds the max duration window, state becomes `TimedOut` and gameplay continues with the last successful offset (if any).
+
+Touch fallback and calibration commands are coordinated by:
 
 - `Assets/Scripts/Input/CueInputCoordinator.cs`
-
-When remote frames go stale, touch input is re-enabled automatically so fallback is immediate.
 
 Reference runtime helpers implementing the wire contract:
 

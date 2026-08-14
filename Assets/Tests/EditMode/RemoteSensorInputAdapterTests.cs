@@ -105,13 +105,83 @@ namespace GyroCue.Tests.EditMode
         }
 
         [Test]
+        public void BeginCalibration_AlignsStackedPhoneOffsetWithinSampleWindow()
+        {
+            var root = new GameObject("remote-adapter-calibration-success-test");
+
+            try
+            {
+                var now = 35f;
+                var adapter = root.AddComponent<RemoteSensorInputAdapter>();
+                adapter.SetTimeProviderForTests(() => now);
+
+                adapter.BeginCalibration();
+                Assert.That(adapter.CalibrationState, Is.EqualTo(RemoteCueCalibrationState.Calibrating));
+
+                for (var i = 0; i < 24; i++)
+                {
+                    var didRelease = adapter.ProcessSensorFrame(
+                        CreateFrame(i, Quaternion.Euler(0f, 90f, 0f), Vector3.zero),
+                        out _);
+                    Assert.That(didRelease, Is.False);
+                    now += 0.01f;
+                }
+
+                Assert.That(adapter.IsCalibrationInProgress, Is.False);
+                Assert.That(adapter.CalibrationState, Is.EqualTo(RemoteCueCalibrationState.Calibrated));
+                Assert.That(adapter.HasCalibrationOffset, Is.True);
+
+                var shotReleased = adapter.ProcessSensorFrame(
+                    CreateFrame(30, Quaternion.Euler(0f, 90f, 0f), new Vector3(5f, 0f, 0f)),
+                    out var shotCommand);
+
+                Assert.That(shotReleased, Is.True);
+                Assert.That(adapter.AimDirection.y, Is.GreaterThan(0.95f));
+                Assert.That(shotCommand.AimDirection.y, Is.GreaterThan(0.95f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void BeginCalibration_TimesOutWhenCalibrationWindowExceeded()
+        {
+            var root = new GameObject("remote-adapter-calibration-timeout-test");
+
+            try
+            {
+                var now = 40f;
+                var adapter = root.AddComponent<RemoteSensorInputAdapter>();
+                adapter.SetTimeProviderForTests(() => now);
+                adapter.BeginCalibration();
+
+                adapter.ProcessSensorFrame(CreateFrame(0, Quaternion.identity, Vector3.zero), out _);
+                now += 9f;
+
+                var didRelease = adapter.ProcessSensorFrame(
+                    CreateFrame(1, Quaternion.identity, Vector3.zero),
+                    out _);
+
+                Assert.That(didRelease, Is.False);
+                Assert.That(adapter.IsCalibrationInProgress, Is.False);
+                Assert.That(adapter.CalibrationState, Is.EqualTo(RemoteCueCalibrationState.TimedOut));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void CueInputCoordinator_LocksTouchWhileRemoteIsFreshAndRestoresOnTimeout()
         {
             var root = new GameObject("cue-input-coordinator-test");
 
             try
             {
-                var now = 40f;
+                var now = 50f;
                 var touchController = root.AddComponent<TouchAimSwipeController>();
                 var remoteAdapter = root.AddComponent<RemoteSensorInputAdapter>();
                 var coordinator = root.AddComponent<CueInputCoordinator>();
@@ -126,6 +196,36 @@ namespace GyroCue.Tests.EditMode
 
                 now += 1f;
                 coordinator.RefreshInputLocks();
+                Assert.That(touchController.TouchInputEnabled, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void CueInputCoordinator_BeginRemoteCalibration_UnlocksTouchDuringCalibration()
+        {
+            var root = new GameObject("cue-input-coordinator-calibration-test");
+
+            try
+            {
+                var now = 60f;
+                var touchController = root.AddComponent<TouchAimSwipeController>();
+                var remoteAdapter = root.AddComponent<RemoteSensorInputAdapter>();
+                var coordinator = root.AddComponent<CueInputCoordinator>();
+                remoteAdapter.SetTimeProviderForTests(() => now);
+
+                remoteAdapter.ProcessSensorFrame(CreateFrame(0, Quaternion.identity, Vector3.zero), out _);
+                coordinator.RefreshInputLocks();
+                Assert.That(touchController.TouchInputEnabled, Is.False);
+
+                coordinator.BeginRemoteCalibration();
+                coordinator.RefreshInputLocks();
+
+                Assert.That(coordinator.IsRemoteCalibrationInProgress, Is.True);
+                Assert.That(coordinator.RemoteCalibrationState, Is.EqualTo(RemoteCueCalibrationState.Calibrating));
                 Assert.That(touchController.TouchInputEnabled, Is.True);
             }
             finally
