@@ -34,7 +34,7 @@ To move quickly, this project is planned as a **Unity-based mobile app** (iOS-fi
 - **Packages manifest:** `Packages/manifest.json`
 
 ## Status
-Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, cue indicator + shot preview visualization, a foundational turn state machine, centralized pool physics tuning helpers, baseline pocket-detection/rules signaling scripts, first-pass remote sensor cue integration (aim/shot mapping + instant touch fallback), quick stacked-phone calibration hooks (<10s target with recalibration entry points), and a scenario-driven EditMode gameplay test harness for turn/foul/win transitions now landed; next up are tabletop stability filtering, foul specifics, full pocket integration in-scene, and HUD polish.
+Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, cue indicator + shot preview visualization, a foundational turn state machine, centralized pool physics tuning helpers, baseline pocket-detection/rules signaling scripts, first-pass remote sensor cue integration (aim/shot mapping + instant touch fallback), quick stacked-phone calibration hooks (<10s target with recalibration entry points), a companion-phone streaming prototype (connect/disconnect/start/stop + stable UDP frame cadence), and a scenario-driven EditMode gameplay test harness for turn/foul/win transitions now landed; next up are tabletop stability filtering, foul specifics, full pocket integration in-scene, and HUD polish.
 
 ## CI Pipeline (Issue #15)
 A GitHub Actions workflow now lives at `.github/workflows/unity-ci.yml` and runs on push + pull request.
