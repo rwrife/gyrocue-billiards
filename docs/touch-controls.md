@@ -32,3 +32,4 @@ This document describes the first-pass single-phone control path implemented in 
 
 - Connect `ShotReleased` to cue-ball impulse application when physics issue work lands.
 - Mirror shot intents into optional second-device cue pipeline so dual-phone mode can share the same shot command contract.
+- Wire pause/settings UI buttons to `CueInputCoordinator.BeginRemoteCalibration()` / `CancelRemoteCalibration()` so stacked-phone alignment can be re-run mid-session.

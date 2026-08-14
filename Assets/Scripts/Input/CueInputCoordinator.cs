@@ -19,6 +19,40 @@ namespace GyroCue.Input
 
         public event Action<ShotCommand> ShotReleased;
 
+        public bool IsRemoteCalibrationInProgress =>
+            remoteSensorInputAdapter != null && remoteSensorInputAdapter.IsCalibrationInProgress;
+
+        public RemoteCueCalibrationState RemoteCalibrationState =>
+            remoteSensorInputAdapter != null
+                ? remoteSensorInputAdapter.CalibrationState
+                : RemoteCueCalibrationState.NotCalibrated;
+
+        public void BeginRemoteCalibration()
+        {
+            ResolveReferences();
+
+            if (remoteSensorInputAdapter == null)
+            {
+                return;
+            }
+
+            remoteSensorInputAdapter.BeginCalibration();
+            RefreshInputLocks();
+        }
+
+        public void CancelRemoteCalibration()
+        {
+            ResolveReferences();
+
+            if (remoteSensorInputAdapter == null)
+            {
+                return;
+            }
+
+            remoteSensorInputAdapter.CancelCalibration();
+            RefreshInputLocks();
+        }
+
         public void RefreshInputLocks()
         {
             ResolveReferences();
