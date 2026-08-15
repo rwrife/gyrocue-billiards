@@ -29,6 +29,21 @@ namespace GyroCue.Input
         [SerializeField]
         private float aimSensitivity = 1f;
 
+        [SerializeField, Range(0f, 1f)]
+        private float aimSmoothingFactor = 0.35f;
+
+        [SerializeField, Range(0f, 45f)]
+        private float maxAimStepDegreesPerFrame = 12f;
+
+        [SerializeField, Min(0f)]
+        private float stationaryAngularVelocityThresholdRadPerSec = 0.12f;
+
+        [SerializeField, Min(0f)]
+        private float stationaryForwardAccelerationThresholdMps2 = 0.35f;
+
+        [SerializeField, Range(0f, 20f)]
+        private float stationaryAimDriftClampDegrees = 3f;
+
         [SerializeField]
         private float shotTriggerAccelerationMps2 = 2.2f;
 
@@ -37,6 +52,12 @@ namespace GyroCue.Input
 
         [SerializeField]
         private float shotPowerSensitivity = 0.2f;
+
+        [SerializeField, Range(0f, 1f)]
+        private float forwardAccelerationSmoothingFactor = 0.8f;
+
+        [SerializeField, Range(0f, 1f)]
+        private float forwardAccelerationDriftCorrectionFactor = 0.15f;
 
         [SerializeField, Range(0f, 1f)]
         private float minimumLaunchPower = 0.08f;
@@ -62,6 +83,12 @@ namespace GyroCue.Input
         private Vector3 calibrationForwardAccumulator;
         private Vector3 calibrationUpAccumulator;
         private RemoteCueCalibrationState calibrationState = RemoteCueCalibrationState.NotCalibrated;
+        private bool hasForwardAccelerationBias;
+        private float forwardAccelerationBiasMps2;
+        private bool hasSmoothedForwardAcceleration;
+        private float smoothedForwardAccelerationMps2;
+        private bool stationaryAimAnchorActive;
+        private Vector2 stationaryAimAnchor = Vector2.up;
 
         public event Action<ShotCommand> ShotReleased;
 
@@ -97,6 +124,28 @@ namespace GyroCue.Input
             timeProvider = provider ?? (() => Time.unscaledTime);
         }
 
+        /// <summary>
+        /// Test-only hook for deterministic tuning checks.
+        /// </summary>
+        public void ConfigureStabilityFilterForTests(
+            float aimSmoothing,
+            float maxAimStepDegrees,
+            float stationaryAngularVelocityThreshold,
+            float stationaryForwardAccelerationThreshold,
+            float stationaryDriftClampDegrees,
+            float forwardAccelerationSmoothing,
+            float forwardAccelerationDriftCorrection)
+        {
+            aimSmoothingFactor = Mathf.Clamp01(aimSmoothing);
+            maxAimStepDegreesPerFrame = Mathf.Clamp(maxAimStepDegrees, 0f, 45f);
+            stationaryAngularVelocityThresholdRadPerSec = Mathf.Max(0f, stationaryAngularVelocityThreshold);
+            stationaryForwardAccelerationThresholdMps2 = Mathf.Max(0f, stationaryForwardAccelerationThreshold);
+            stationaryAimDriftClampDegrees = Mathf.Clamp(stationaryDriftClampDegrees, 0f, 20f);
+            forwardAccelerationSmoothingFactor = Mathf.Clamp01(forwardAccelerationSmoothing);
+            forwardAccelerationDriftCorrectionFactor = Mathf.Clamp01(forwardAccelerationDriftCorrection);
+            ResetStabilityFilterState();
+        }
+
         public void SetRemoteInputEnabled(bool enabled)
         {
             remoteInputEnabled = enabled;
@@ -108,6 +157,7 @@ namespace GyroCue.Input
                 shotTriggerArmed = true;
                 calibrationInProgress = false;
                 ResetCalibrationAccumulators();
+                ResetStabilityFilterState();
             }
         }
 
@@ -123,6 +173,7 @@ namespace GyroCue.Input
             previewPower01 = 0f;
             shotTriggerArmed = true;
             ResetCalibrationAccumulators();
+            ResetStabilityFilterState();
         }
 
         public void CancelCalibration()
@@ -138,6 +189,7 @@ namespace GyroCue.Input
                 ? RemoteCueCalibrationState.Calibrated
                 : RemoteCueCalibrationState.NotCalibrated;
             ResetCalibrationAccumulators();
+            ResetStabilityFilterState();
         }
 
         public void ClearCalibration()
@@ -185,11 +237,17 @@ namespace GyroCue.Input
 
             var calibratedOrientation = ApplyCalibration(frame.Orientation);
             var calibratedAcceleration = ApplyCalibration(frame.AccelerationMps2);
-
-            UpdateAimDirection(calibratedOrientation);
+            var calibratedAngularVelocity = ApplyCalibration(frame.AngularVelocityRadPerSec);
 
             var cueForward = calibratedOrientation * Vector3.forward;
-            var forwardAcceleration = Vector3.Dot(calibratedAcceleration, cueForward);
+            var rawForwardAcceleration = Vector3.Dot(calibratedAcceleration, cueForward);
+            var isStationary =
+                calibratedAngularVelocity.magnitude <= stationaryAngularVelocityThresholdRadPerSec &&
+                Mathf.Abs(rawForwardAcceleration) <= stationaryForwardAccelerationThresholdMps2;
+
+            UpdateAimDirection(calibratedOrientation, isStationary);
+
+            var forwardAcceleration = ApplyForwardAccelerationFilter(rawForwardAcceleration, isStationary);
 
             var triggerThreshold = Mathf.Max(0f, shotTriggerAccelerationMps2);
             var rearmThreshold = Mathf.Min(triggerThreshold, Mathf.Max(0f, shotTriggerRearmAccelerationMps2));
@@ -220,6 +278,7 @@ namespace GyroCue.Input
             lastFrameReceivedRealtime = float.NegativeInfinity;
             previewPower01 = 0f;
             shotTriggerArmed = true;
+            ResetStabilityFilterState();
         }
 
         private float NowSeconds => timeProvider();
@@ -248,6 +307,7 @@ namespace GyroCue.Input
             calibrationStartedRealtime = float.NegativeInfinity;
             calibrationState = RemoteCueCalibrationState.Calibrated;
             ResetCalibrationAccumulators();
+            ResetStabilityFilterState();
         }
 
         private void FailCalibrationTimeout()
@@ -258,6 +318,7 @@ namespace GyroCue.Input
             previewPower01 = 0f;
             shotTriggerArmed = true;
             ResetCalibrationAccumulators();
+            ResetStabilityFilterState();
         }
 
         private void ResetCalibrationAccumulators()
@@ -277,7 +338,7 @@ namespace GyroCue.Input
             return hasCalibrationOffset ? calibrationOffset * sensorVector : sensorVector;
         }
 
-        private void UpdateAimDirection(Quaternion orientation)
+        private void UpdateAimDirection(Quaternion orientation, bool isStationary)
         {
             var forward = orientation * Vector3.forward;
             var candidate = new Vector2(forward.x * Mathf.Max(0.01f, aimSensitivity), forward.z);
@@ -289,12 +350,122 @@ namespace GyroCue.Input
 
             candidate.Normalize();
 
+            if (isStationary)
+            {
+                if (!stationaryAimAnchorActive)
+                {
+                    stationaryAimAnchor = aimDirection;
+                    stationaryAimAnchorActive = true;
+                }
+
+                candidate = ClampAimStep(stationaryAimAnchor, candidate, stationaryAimDriftClampDegrees);
+            }
+            else
+            {
+                stationaryAimAnchorActive = false;
+            }
+
+            candidate = ClampAimStep(aimDirection, candidate, maxAimStepDegreesPerFrame);
+
             if (Vector2.Angle(aimDirection, candidate) < aimDeadzoneDegrees)
             {
                 return;
             }
 
-            aimDirection = candidate;
+            var blendedDirection = BlendAimDirection(aimDirection, candidate, aimSmoothingFactor);
+            aimDirection = NormalizeOrFallback2D(blendedDirection, aimDirection);
+        }
+
+        private float ApplyForwardAccelerationFilter(float rawForwardAccelerationMps2, bool isStationary)
+        {
+            if (!hasForwardAccelerationBias)
+            {
+                forwardAccelerationBiasMps2 = isStationary ? rawForwardAccelerationMps2 : 0f;
+                hasForwardAccelerationBias = true;
+            }
+
+            if (isStationary)
+            {
+                forwardAccelerationBiasMps2 = Mathf.Lerp(
+                    forwardAccelerationBiasMps2,
+                    rawForwardAccelerationMps2,
+                    forwardAccelerationDriftCorrectionFactor);
+            }
+
+            var correctedForwardAcceleration = rawForwardAccelerationMps2 - forwardAccelerationBiasMps2;
+
+            if (!hasSmoothedForwardAcceleration)
+            {
+                smoothedForwardAccelerationMps2 = correctedForwardAcceleration;
+                hasSmoothedForwardAcceleration = true;
+            }
+            else
+            {
+                smoothedForwardAccelerationMps2 = Mathf.Lerp(
+                    smoothedForwardAccelerationMps2,
+                    correctedForwardAcceleration,
+                    forwardAccelerationSmoothingFactor);
+            }
+
+            return smoothedForwardAccelerationMps2;
+        }
+
+        private void ResetStabilityFilterState()
+        {
+            hasForwardAccelerationBias = false;
+            forwardAccelerationBiasMps2 = 0f;
+            hasSmoothedForwardAcceleration = false;
+            smoothedForwardAccelerationMps2 = 0f;
+            stationaryAimAnchorActive = false;
+            stationaryAimAnchor = aimDirection;
+        }
+
+        private static Vector2 ClampAimStep(Vector2 from, Vector2 to, float maxStepDegrees)
+        {
+            var normalizedFrom = NormalizeOrFallback2D(from, Vector2.up);
+            var normalizedTo = NormalizeOrFallback2D(to, normalizedFrom);
+            var allowedStep = Mathf.Max(0f, maxStepDegrees);
+            var deltaDegrees = Vector2.SignedAngle(normalizedFrom, normalizedTo);
+
+            if (Mathf.Abs(deltaDegrees) <= allowedStep)
+            {
+                return normalizedTo;
+            }
+
+            var clampedStep = Mathf.Clamp(deltaDegrees, -allowedStep, allowedStep);
+            var rotated = (Vector2)(Quaternion.Euler(0f, 0f, clampedStep) * normalizedFrom);
+            return NormalizeOrFallback2D(rotated, normalizedFrom);
+        }
+
+        private static Vector2 BlendAimDirection(Vector2 current, Vector2 target, float smoothingFactor)
+        {
+            var t = Mathf.Clamp01(smoothingFactor);
+            var normalizedCurrent = NormalizeOrFallback2D(current, Vector2.up);
+            var normalizedTarget = NormalizeOrFallback2D(target, normalizedCurrent);
+
+            if (t <= 0f)
+            {
+                return normalizedCurrent;
+            }
+
+            if (t >= 1f)
+            {
+                return normalizedTarget;
+            }
+
+            return NormalizeOrFallback2D(
+                (normalizedCurrent * (1f - t)) + (normalizedTarget * t),
+                normalizedTarget);
+        }
+
+        private static Vector2 NormalizeOrFallback2D(Vector2 value, Vector2 fallback)
+        {
+            if (value.sqrMagnitude < 0.0001f)
+            {
+                return fallback.sqrMagnitude < 0.0001f ? Vector2.up : fallback.normalized;
+            }
+
+            return value.normalized;
         }
 
         private static Vector3 NormalizeOrFallback(Vector3 value, Vector3 fallback)
@@ -333,6 +504,14 @@ namespace GyroCue.Input
             {
                 calibrationMaxDurationSeconds = 9.5f;
             }
+
+            aimSmoothingFactor = Mathf.Clamp01(aimSmoothingFactor);
+            maxAimStepDegreesPerFrame = Mathf.Clamp(maxAimStepDegreesPerFrame, 0f, 45f);
+            stationaryAngularVelocityThresholdRadPerSec = Mathf.Max(0f, stationaryAngularVelocityThresholdRadPerSec);
+            stationaryForwardAccelerationThresholdMps2 = Mathf.Max(0f, stationaryForwardAccelerationThresholdMps2);
+            stationaryAimDriftClampDegrees = Mathf.Clamp(stationaryAimDriftClampDegrees, 0f, 20f);
+            forwardAccelerationSmoothingFactor = Mathf.Clamp01(forwardAccelerationSmoothingFactor);
+            forwardAccelerationDriftCorrectionFactor = Mathf.Clamp01(forwardAccelerationDriftCorrectionFactor);
         }
     }
 }
