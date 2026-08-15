@@ -175,6 +175,129 @@ namespace GyroCue.Tests.EditMode
         }
 
         [Test]
+        public void ProcessSensorFrame_StationaryDriftClampPreventsRunawayAim()
+        {
+            var root = new GameObject("remote-adapter-stationary-drift-clamp-test");
+
+            try
+            {
+                var now = 45f;
+                var adapter = root.AddComponent<RemoteSensorInputAdapter>();
+                adapter.SetTimeProviderForTests(() => now);
+                adapter.ConfigureStabilityFilterForTests(
+                    aimSmoothing: 1f,
+                    maxAimStepDegrees: 45f,
+                    stationaryAngularVelocityThreshold: 0.2f,
+                    stationaryForwardAccelerationThreshold: 0.5f,
+                    stationaryDriftClampDegrees: 1.25f,
+                    forwardAccelerationSmoothing: 1f,
+                    forwardAccelerationDriftCorrection: 0.2f);
+
+                adapter.ProcessSensorFrame(CreateFrame(0, Quaternion.identity, Vector3.zero), out _);
+
+                for (var i = 1; i <= 20; i++)
+                {
+                    now += 0.02f;
+                    var driftingOrientation = Quaternion.Euler(0f, i * 2f, 0f);
+                    adapter.ProcessSensorFrame(CreateFrame(i, driftingOrientation, Vector3.zero), out _);
+                }
+
+                Assert.That(Vector2.Angle(Vector2.up, adapter.AimDirection), Is.LessThanOrEqualTo(1.5f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void ProcessSensorFrame_DriftCorrectionAndSmoothingAreConfigurable()
+        {
+            var driftRoot = new GameObject("remote-adapter-drift-correction-config-test");
+            var smoothingRoot = new GameObject("remote-adapter-smoothing-config-test");
+            var fastSmoothingRoot = new GameObject("remote-adapter-fast-smoothing-config-test");
+
+            try
+            {
+                var now = 47f;
+
+                var driftAdapter = driftRoot.AddComponent<RemoteSensorInputAdapter>();
+                driftAdapter.SetTimeProviderForTests(() => now);
+                driftAdapter.ConfigureStabilityFilterForTests(
+                    aimSmoothing: 1f,
+                    maxAimStepDegrees: 45f,
+                    stationaryAngularVelocityThreshold: 0.2f,
+                    stationaryForwardAccelerationThreshold: 3f,
+                    stationaryDriftClampDegrees: 4f,
+                    forwardAccelerationSmoothing: 1f,
+                    forwardAccelerationDriftCorrection: 1f);
+
+                var driftShot1 = driftAdapter.ProcessSensorFrame(
+                    CreateFrame(0, Quaternion.identity, new Vector3(0f, 0f, 2.3f)),
+                    out _);
+
+                now += 0.02f;
+                var driftShot2 = driftAdapter.ProcessSensorFrame(
+                    CreateFrame(1, Quaternion.identity, new Vector3(0f, 0f, 2.4f)),
+                    out _);
+
+                now += 0.02f;
+                var driftShot3 = driftAdapter.ProcessSensorFrame(
+                    CreateFrame(2, Quaternion.identity, new Vector3(0f, 0f, 5f)),
+                    out _);
+
+                Assert.That(driftShot1, Is.False, "stationary bias should not trigger a shot");
+                Assert.That(driftShot2, Is.False, "drift-corrected baseline should suppress runaway forward bias");
+                Assert.That(driftShot3, Is.True, "intentional spike should still exceed trigger after correction");
+
+                now = 55f;
+                var smoothedAdapter = smoothingRoot.AddComponent<RemoteSensorInputAdapter>();
+                smoothedAdapter.SetTimeProviderForTests(() => now);
+                smoothedAdapter.ConfigureStabilityFilterForTests(
+                    aimSmoothing: 1f,
+                    maxAimStepDegrees: 45f,
+                    stationaryAngularVelocityThreshold: 0.2f,
+                    stationaryForwardAccelerationThreshold: 0.5f,
+                    stationaryDriftClampDegrees: 4f,
+                    forwardAccelerationSmoothing: 0.2f,
+                    forwardAccelerationDriftCorrection: 0f);
+
+                smoothedAdapter.ProcessSensorFrame(CreateFrame(0, Quaternion.identity, Vector3.zero), out _);
+                now += 0.02f;
+                var slowSmoothingShot = smoothedAdapter.ProcessSensorFrame(
+                    CreateFrame(1, Quaternion.identity, new Vector3(0f, 0f, 2.8f)),
+                    out _);
+
+                now = 65f;
+                var fastSmoothingAdapter = fastSmoothingRoot.AddComponent<RemoteSensorInputAdapter>();
+                fastSmoothingAdapter.SetTimeProviderForTests(() => now);
+                fastSmoothingAdapter.ConfigureStabilityFilterForTests(
+                    aimSmoothing: 1f,
+                    maxAimStepDegrees: 45f,
+                    stationaryAngularVelocityThreshold: 0.2f,
+                    stationaryForwardAccelerationThreshold: 0.5f,
+                    stationaryDriftClampDegrees: 4f,
+                    forwardAccelerationSmoothing: 1f,
+                    forwardAccelerationDriftCorrection: 0f);
+
+                fastSmoothingAdapter.ProcessSensorFrame(CreateFrame(0, Quaternion.identity, Vector3.zero), out _);
+                now += 0.02f;
+                var fastSmoothingShot = fastSmoothingAdapter.ProcessSensorFrame(
+                    CreateFrame(1, Quaternion.identity, new Vector3(0f, 0f, 2.8f)),
+                    out _);
+
+                Assert.That(slowSmoothingShot, Is.False, "low smoothing factor should damp one-frame spikes");
+                Assert.That(fastSmoothingShot, Is.True, "high smoothing factor should preserve immediate spike response");
+            }
+            finally
+            {
+                Object.DestroyImmediate(driftRoot);
+                Object.DestroyImmediate(smoothingRoot);
+                Object.DestroyImmediate(fastSmoothingRoot);
+            }
+        }
+
+        [Test]
         public void CueInputCoordinator_LocksTouchWhileRemoteIsFreshAndRestoresOnTimeout()
         {
             var root = new GameObject("cue-input-coordinator-test");
@@ -236,13 +359,22 @@ namespace GyroCue.Tests.EditMode
 
         private static RemoteCueSensorFrame CreateFrame(long sequence, Quaternion orientation, Vector3 accelerationMps2)
         {
+            return CreateFrame(sequence, orientation, accelerationMps2, Vector3.zero);
+        }
+
+        private static RemoteCueSensorFrame CreateFrame(
+            long sequence,
+            Quaternion orientation,
+            Vector3 accelerationMps2,
+            Vector3 angularVelocityRadPerSec)
+        {
             return new RemoteCueSensorFrame(
                 RemoteCueProtocol.SchemaVersionV1,
                 timestampUnixMs: 1_000 + sequence,
                 sequence: sequence,
                 orientation,
                 accelerationMps2,
-                angularVelocityRadPerSec: Vector3.zero);
+                angularVelocityRadPerSec);
         }
     }
 }

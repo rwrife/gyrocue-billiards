@@ -81,9 +81,16 @@ Key tunables are exposed as serialized fields for per-device balancing:
 
 - `aimDeadzoneDegrees` — ignores tiny orientation jitter.
 - `aimSensitivity` — scales lateral orientation response.
+- `aimSmoothingFactor` — low-pass blend for orientation updates.
+- `maxAimStepDegreesPerFrame` — clamps single-frame direction spikes.
+- `stationaryAngularVelocityThresholdRadPerSec` — identifies low-motion drift windows.
+- `stationaryForwardAccelerationThresholdMps2` — forward-axis stillness gate for drift logic.
+- `stationaryAimDriftClampDegrees` — prevents runaway aim drift while device is stationary.
 - `shotTriggerAccelerationMps2` — forward-acceleration threshold required to fire.
 - `shotTriggerRearmAccelerationMps2` — release/rearm threshold to prevent repeated fire spam.
 - `shotPowerSensitivity` — maps trigger-overdrive acceleration to normalized shot power.
+- `forwardAccelerationSmoothingFactor` — configurable smoothing for shot-trigger spikes.
+- `forwardAccelerationDriftCorrectionFactor` — baseline correction for forward-axis drift.
 - `frameTimeoutSeconds` — marks remote control inactive when stream freshness is lost.
 - `calibrationSampleTarget` — number of frames to average during stacked-phone calibration.
 - `calibrationMaxDurationSeconds` — hard cap for calibration completion (clamped below 10s).
