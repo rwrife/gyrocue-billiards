@@ -17,6 +17,7 @@ The harness executes shot-resolution scenarios and asserts final turn state:
 4. Eight-ball + scratch resolves to `MatchLost` (regression fixture).
 5. Duplicate cue-ball pocket signals are ignored after first pocket (regression fixture).
 6. No-contact shot (without scratch) is still treated as a foul (regression fixture).
+7. Foul outcomes now raise a cue-ball-in-hand requirement before the next shot can begin.
 
 ## Why this matters
 

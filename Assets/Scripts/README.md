@@ -10,6 +10,7 @@ Runtime gameplay scripts live here.
   - `PoolPhysicsMath.cs` provides deterministic cushion-bounce/rest helpers used by physics tuning and edit-mode tests.
   - `PocketTableController.cs` resolves pocket events, de-duplicates trigger contacts, removes pocketed balls from simulation, and exposes scratch events for the rules layer.
   - `PocketTriggerReporter.cs` forwards pocket trigger collisions to the shared pocket controller.
+  - `CueBallPlacementController.cs` manages cue-ball-in-hand placement after fouls and clamps placement to playable table bounds.
 - `Input/` for player input adapters and shot-intent composition.
   - `TouchAimSwipeController.cs` handles drag-to-aim + pull/release shot gestures.
   - `TouchShotMath.cs` exposes testable aim/power helpers.

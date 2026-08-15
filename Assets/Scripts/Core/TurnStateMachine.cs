@@ -19,24 +19,31 @@ namespace GyroCue.Core
         /// </summary>
         public int TurnNumber { get; private set; } = 1;
 
+        /// <summary>
+        /// True when the active player must place the cue ball before taking a shot
+        /// (for example, after a scratch/no-contact foul).
+        /// </summary>
+        public bool RequiresCueBallPlacement { get; private set; }
+
         public bool IsTerminal => Phase == TurnLifecyclePhase.MatchWon || Phase == TurnLifecyclePhase.MatchLost;
 
         /// <summary>
         /// Input should be considered locked while shot simulation or resolution is in progress,
         /// and after terminal outcomes.
         /// </summary>
-        public bool InputLocked => Phase != TurnLifecyclePhase.AwaitingShot;
+        public bool InputLocked => Phase != TurnLifecyclePhase.AwaitingShot || RequiresCueBallPlacement;
 
         public void ResetMatch(bool playerOneStarts = true)
         {
             CurrentPlayerIndex = playerOneStarts ? 0 : 1;
             TurnNumber = 1;
             Phase = TurnLifecyclePhase.AwaitingShot;
+            RequiresCueBallPlacement = false;
         }
 
         public bool TryBeginShot()
         {
-            if (Phase != TurnLifecyclePhase.AwaitingShot)
+            if (Phase != TurnLifecyclePhase.AwaitingShot || RequiresCueBallPlacement)
             {
                 return false;
             }
@@ -65,12 +72,14 @@ namespace GyroCue.Core
 
             if (result.WonMatch)
             {
+                RequiresCueBallPlacement = false;
                 Phase = TurnLifecyclePhase.MatchWon;
                 return true;
             }
 
             if (result.LostMatch)
             {
+                RequiresCueBallPlacement = false;
                 Phase = TurnLifecyclePhase.MatchLost;
                 return true;
             }
@@ -82,7 +91,20 @@ namespace GyroCue.Core
                 TurnNumber++;
             }
 
+            RequiresCueBallPlacement = result.CommittedFoul;
+
             Phase = TurnLifecyclePhase.AwaitingShot;
+            return true;
+        }
+
+        public bool TryCompleteCueBallPlacement()
+        {
+            if (Phase != TurnLifecyclePhase.AwaitingShot || !RequiresCueBallPlacement)
+            {
+                return false;
+            }
+
+            RequiresCueBallPlacement = false;
             return true;
         }
     }
