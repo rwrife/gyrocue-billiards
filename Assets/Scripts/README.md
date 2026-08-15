@@ -22,3 +22,7 @@ Runtime gameplay scripts live here.
   - `CompanionSensorStreamer.cs` provides a prototype companion-phone session controller (connect/disconnect/start/stop) plus UDP frame streaming at a stable send cadence.
   - `RemoteSensorInputAdapter.cs` maps second-phone orientation/acceleration frames into aim + shot commands and supports a quick stacked-phone calibration pass (target: <10s).
   - `CueInputCoordinator.cs` gates touch-vs-remote control, keeps touch fallback instant when remote frames go stale, and exposes calibration start/cancel hooks suitable for pause/settings UI buttons.
+- `UI/` for lightweight on-screen HUD state + rendering helpers.
+  - `MinimalHudState.cs` is a testable formatter/state model for turn, power, foul, and win/loss messaging.
+  - `HudScaleUtility.cs` scales HUD font sizes from short-edge screen resolution for phone readability.
+  - `MinimalHudPresenter.cs` binds formatted HUD state to `UI.Text` labels, polls touch/remote preview power, and surfaces foul/terminal status colors.
