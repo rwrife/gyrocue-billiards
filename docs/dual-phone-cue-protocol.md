@@ -107,3 +107,31 @@ Reference runtime helpers implementing the wire contract:
 - `Assets/Scripts/Input/RemoteCueProtocol.cs`
 - `Assets/Scripts/Input/RemoteCueSensorFrame.cs`
 - `Assets/Scripts/Input/RemoteCueSensorFrameJson.cs`
+
+## Companion streamer prototype (Issue #11)
+
+A first-pass companion-side controller now lives in:
+
+- `Assets/Scripts/Input/CompanionSensorStreamer.cs`
+
+It is designed for a second phone build that streams sensor frames to the game phone over LAN.
+
+### Session UX states
+
+`CompanionSensorStreamer` exposes explicit state transitions suitable for simple mobile UI buttons:
+
+1. `Disconnected`
+2. `Connected` (target selected + transport ready)
+3. `Streaming` (actively sending frames)
+
+The controller provides `SessionStatusText` so a companion UI can display clear status copy for connect/disconnect/start/stop actions.
+
+### Runtime behavior
+
+- `ConnectToTarget()` validates `targetHost:targetPort` and opens UDP transport.
+- `StartStreaming()` only succeeds from `Connected` state.
+- `StopStreaming()` returns to `Connected` without tearing down the session.
+- `DisconnectFromTarget()` closes transport and resets sequence/timing state.
+- `StreamFrame(...)` enforces a stable send cadence via `streamRateHz` (default 60 Hz), serializes `RemoteCueSensorFrame` JSON payloads, and increments sequence monotonically.
+
+This keeps issue #11 scoped to a mergeable prototype while preserving compatibility with the existing receiver-side contract in issue #13.
