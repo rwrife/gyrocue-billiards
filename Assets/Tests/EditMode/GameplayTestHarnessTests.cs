@@ -24,6 +24,7 @@ namespace GyroCue.Tests.EditMode
                 Assert.That(outcome.CommittedFoul, Is.False);
                 Assert.That(outcome.BallPocketedEventCount, Is.EqualTo(1));
                 Assert.That(outcome.CueScratchEventCount, Is.EqualTo(0));
+                Assert.That(outcome.RequiresCueBallPlacement, Is.False);
                 Assert.That(outcome.Phase, Is.EqualTo(TurnLifecyclePhase.AwaitingShot));
                 Assert.That(outcome.CurrentPlayerIndex, Is.EqualTo(0));
                 Assert.That(outcome.TurnNumber, Is.EqualTo(1));
@@ -51,6 +52,7 @@ namespace GyroCue.Tests.EditMode
                 Assert.That(outcome.ResolveAccepted, Is.True);
                 Assert.That(outcome.CommittedFoul, Is.True);
                 Assert.That(outcome.CueScratchEventCount, Is.EqualTo(1));
+                Assert.That(outcome.RequiresCueBallPlacement, Is.True);
                 Assert.That(outcome.Phase, Is.EqualTo(TurnLifecyclePhase.AwaitingShot));
                 Assert.That(outcome.CurrentPlayerIndex, Is.EqualTo(1));
                 Assert.That(outcome.TurnNumber, Is.EqualTo(2));
@@ -76,6 +78,7 @@ namespace GyroCue.Tests.EditMode
                     duplicateCueScratch: false));
 
                 Assert.That(outcome.ResolveAccepted, Is.True);
+                Assert.That(outcome.RequiresCueBallPlacement, Is.False);
                 Assert.That(outcome.Phase, Is.EqualTo(TurnLifecyclePhase.MatchWon));
                 Assert.That(outcome.IsTerminal, Is.True);
                 Assert.That(outcome.CurrentPlayerIndex, Is.EqualTo(0));
@@ -104,6 +107,7 @@ namespace GyroCue.Tests.EditMode
                 Assert.That(outcome.ResolveAccepted, Is.True);
                 Assert.That(outcome.CommittedFoul, Is.True);
                 Assert.That(outcome.CueScratchEventCount, Is.EqualTo(1));
+                Assert.That(outcome.RequiresCueBallPlacement, Is.False);
                 Assert.That(outcome.Phase, Is.EqualTo(TurnLifecyclePhase.MatchLost));
                 Assert.That(outcome.IsTerminal, Is.True);
             }
@@ -130,6 +134,7 @@ namespace GyroCue.Tests.EditMode
                 Assert.That(outcome.ResolveAccepted, Is.True);
                 Assert.That(outcome.CommittedFoul, Is.True);
                 Assert.That(outcome.CueScratchEventCount, Is.EqualTo(1));
+                Assert.That(outcome.RequiresCueBallPlacement, Is.True);
                 Assert.That(outcome.DuplicateCuePocketIgnored, Is.True);
                 Assert.That(outcome.Phase, Is.EqualTo(TurnLifecyclePhase.AwaitingShot));
                 Assert.That(outcome.CurrentPlayerIndex, Is.EqualTo(1));
@@ -158,6 +163,7 @@ namespace GyroCue.Tests.EditMode
                 Assert.That(outcome.ResolveAccepted, Is.True);
                 Assert.That(outcome.CommittedFoul, Is.True);
                 Assert.That(outcome.CueScratchEventCount, Is.EqualTo(0));
+                Assert.That(outcome.RequiresCueBallPlacement, Is.True);
                 Assert.That(outcome.Phase, Is.EqualTo(TurnLifecyclePhase.AwaitingShot));
                 Assert.That(outcome.CurrentPlayerIndex, Is.EqualTo(1));
                 Assert.That(outcome.TurnNumber, Is.EqualTo(2));
@@ -256,6 +262,7 @@ namespace GyroCue.Tests.EditMode
                     simulationAccepted,
                     resolveAccepted,
                     committedFoul,
+                    turnStateMachine.RequiresCueBallPlacement,
                     turnStateMachine.Phase,
                     turnStateMachine.CurrentPlayerIndex,
                     turnStateMachine.TurnNumber,
@@ -295,6 +302,7 @@ namespace GyroCue.Tests.EditMode
                 bool simulationAccepted,
                 bool resolveAccepted,
                 bool committedFoul,
+                bool requiresCueBallPlacement,
                 TurnLifecyclePhase phase,
                 int currentPlayerIndex,
                 int turnNumber,
@@ -307,6 +315,7 @@ namespace GyroCue.Tests.EditMode
                 SimulationAccepted = simulationAccepted;
                 ResolveAccepted = resolveAccepted;
                 CommittedFoul = committedFoul;
+                RequiresCueBallPlacement = requiresCueBallPlacement;
                 Phase = phase;
                 CurrentPlayerIndex = currentPlayerIndex;
                 TurnNumber = turnNumber;
@@ -323,6 +332,8 @@ namespace GyroCue.Tests.EditMode
             public bool ResolveAccepted { get; }
 
             public bool CommittedFoul { get; }
+
+            public bool RequiresCueBallPlacement { get; }
 
             public TurnLifecyclePhase Phase { get; }
 

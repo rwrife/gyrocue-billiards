@@ -20,6 +20,7 @@ namespace GyroCue.Tests.EditMode
 
             Assert.That(resolved, Is.True);
             Assert.That(machine.Phase, Is.EqualTo(TurnLifecyclePhase.AwaitingShot));
+            Assert.That(machine.RequiresCueBallPlacement, Is.False);
             Assert.That(machine.CurrentPlayerIndex, Is.EqualTo(0));
             Assert.That(machine.TurnNumber, Is.EqualTo(1));
         }
@@ -52,8 +53,27 @@ namespace GyroCue.Tests.EditMode
 
             Assert.That(resolved, Is.True);
             Assert.That(machine.Phase, Is.EqualTo(TurnLifecyclePhase.AwaitingShot));
+            Assert.That(machine.RequiresCueBallPlacement, Is.True);
+            Assert.That(machine.InputLocked, Is.True);
             Assert.That(machine.CurrentPlayerIndex, Is.EqualTo(1));
             Assert.That(machine.TurnNumber, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void FoulResolution_RequiresCueBallPlacementBeforeNextShot()
+        {
+            var machine = new TurnStateMachine();
+
+            machine.TryBeginShot();
+            machine.TryMarkSimulationComplete();
+
+            Assert.That(machine.TryResolveTurn(TurnResolutionResult.Continue(keepTurn: false, committedFoul: true)), Is.True);
+            Assert.That(machine.RequiresCueBallPlacement, Is.True);
+            Assert.That(machine.TryBeginShot(), Is.False);
+
+            Assert.That(machine.TryCompleteCueBallPlacement(), Is.True);
+            Assert.That(machine.RequiresCueBallPlacement, Is.False);
+            Assert.That(machine.TryBeginShot(), Is.True);
         }
 
         [Test]
@@ -66,6 +86,7 @@ namespace GyroCue.Tests.EditMode
             Assert.That(winMachine.TryResolveTurn(TurnResolutionResult.Win()), Is.True);
             Assert.That(winMachine.Phase, Is.EqualTo(TurnLifecyclePhase.MatchWon));
             Assert.That(winMachine.IsTerminal, Is.True);
+            Assert.That(winMachine.RequiresCueBallPlacement, Is.False);
             Assert.That(winMachine.TryBeginShot(), Is.False);
 
             var lossMachine = new TurnStateMachine();
@@ -75,6 +96,7 @@ namespace GyroCue.Tests.EditMode
             Assert.That(lossMachine.TryResolveTurn(TurnResolutionResult.Loss()), Is.True);
             Assert.That(lossMachine.Phase, Is.EqualTo(TurnLifecyclePhase.MatchLost));
             Assert.That(lossMachine.IsTerminal, Is.True);
+            Assert.That(lossMachine.RequiresCueBallPlacement, Is.False);
             Assert.That(lossMachine.TryBeginShot(), Is.False);
         }
     }
