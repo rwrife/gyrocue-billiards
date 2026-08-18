@@ -30,6 +30,8 @@ namespace GyroCue.Core
 
         public int PocketedBallCount => pocketedBodyInstanceIds.Count;
 
+        public int ObjectBallsPocketedThisTurn { get; private set; }
+
         public Rigidbody2D CueBallBody
         {
             get => cueBallBody;
@@ -43,6 +45,14 @@ namespace GyroCue.Core
         public void BeginTurnPocketTracking()
         {
             ScratchOccurredThisTurn = false;
+            ObjectBallsPocketedThisTurn = 0;
+
+            // The cue ball returns to play after ball-in-hand, unlike object balls.
+            // Remove its prior scratch marker so a later turn can detect a new scratch.
+            if (cueBallBody != null)
+            {
+                pocketedBodyInstanceIds.Remove(cueBallBody.GetInstanceID());
+            }
         }
 
         public bool TryPocketFromTrigger(Collider2D other, Vector2 pocketPosition)
@@ -92,6 +102,10 @@ namespace GyroCue.Core
             {
                 ScratchOccurredThisTurn = true;
                 CueBallScratched?.Invoke(pocketEvent);
+            }
+            else
+            {
+                ObjectBallsPocketedThisTurn++;
             }
 
             return true;
