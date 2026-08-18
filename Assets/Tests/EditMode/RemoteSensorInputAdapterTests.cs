@@ -328,6 +328,40 @@ namespace GyroCue.Tests.EditMode
         }
 
         [Test]
+        public void CueInputCoordinator_GameplayLockRejectsRemoteFramesAndLocksTouch()
+        {
+            var root = new GameObject("cue-input-coordinator-gameplay-lock-test");
+
+            try
+            {
+                var touchController = root.AddComponent<TouchAimSwipeController>();
+                var remoteAdapter = root.AddComponent<RemoteSensorInputAdapter>();
+                var coordinator = root.AddComponent<CueInputCoordinator>();
+                remoteAdapter.SetTimeProviderForTests(() => 70f);
+
+                coordinator.SetGameplayInputLocked(true);
+
+                Assert.That(coordinator.GameplayInputLocked, Is.True);
+                Assert.That(touchController.InputLocked, Is.True);
+                Assert.That(
+                    coordinator.TryProcessRemoteSensorFrame(
+                        CreateFrame(0, Quaternion.identity, new Vector3(0f, 0f, 4f)),
+                        out _),
+                    Is.False);
+                Assert.That(remoteAdapter.IsRemoteControlActive, Is.False);
+
+                coordinator.SetGameplayInputLocked(false);
+
+                Assert.That(coordinator.GameplayInputLocked, Is.False);
+                Assert.That(touchController.InputLocked, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void CueInputCoordinator_BeginRemoteCalibration_UnlocksTouchDuringCalibration()
         {
             var root = new GameObject("cue-input-coordinator-calibration-test");

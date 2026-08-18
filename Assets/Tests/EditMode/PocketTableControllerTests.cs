@@ -86,6 +86,35 @@ namespace GyroCue.Tests.EditMode
         }
 
         [Test]
+        public void BeginTurnPocketTracking_AllowsCueBallToScratchAgainAfterPlacement()
+        {
+            var tableObject = new GameObject("table");
+            var cueBallObject = new GameObject("cue-ball");
+
+            try
+            {
+                var table = tableObject.AddComponent<PocketTableController>();
+                var cueBallBody = cueBallObject.AddComponent<Rigidbody2D>();
+                table.CueBallBody = cueBallBody;
+
+                table.BeginTurnPocketTracking();
+                Assert.That(table.TryPocketBody(cueBallBody, Vector2.zero), Is.True);
+
+                cueBallObject.SetActive(true);
+                cueBallBody.simulated = true;
+                table.BeginTurnPocketTracking();
+
+                Assert.That(table.TryPocketBody(cueBallBody, Vector2.one), Is.True);
+                Assert.That(table.ScratchOccurredThisTurn, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(tableObject);
+                Object.DestroyImmediate(cueBallObject);
+            }
+        }
+
+        [Test]
         public void TryPocketBody_DuplicateTriggerContacts_AreIgnoredAfterFirstPocket()
         {
             var tableObject = new GameObject("table");
@@ -107,6 +136,38 @@ namespace GyroCue.Tests.EditMode
             {
                 Object.DestroyImmediate(tableObject);
                 Object.DestroyImmediate(ballObject);
+            }
+        }
+
+        [Test]
+        public void BeginTurnPocketTracking_ResetsShotScopedObjectBallCount()
+        {
+            var tableObject = new GameObject("table");
+            var firstBallObject = new GameObject("first-ball");
+            var secondBallObject = new GameObject("second-ball");
+
+            try
+            {
+                var table = tableObject.AddComponent<PocketTableController>();
+                var firstBody = firstBallObject.AddComponent<Rigidbody2D>();
+                var secondBody = secondBallObject.AddComponent<Rigidbody2D>();
+
+                table.BeginTurnPocketTracking();
+                table.TryPocketBody(firstBody, Vector2.zero);
+                Assert.That(table.ObjectBallsPocketedThisTurn, Is.EqualTo(1));
+
+                table.BeginTurnPocketTracking();
+                Assert.That(table.ObjectBallsPocketedThisTurn, Is.EqualTo(0));
+
+                table.TryPocketBody(secondBody, Vector2.one);
+                Assert.That(table.ObjectBallsPocketedThisTurn, Is.EqualTo(1));
+                Assert.That(table.PocketedBallCount, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(tableObject);
+                Object.DestroyImmediate(firstBallObject);
+                Object.DestroyImmediate(secondBallObject);
             }
         }
     }

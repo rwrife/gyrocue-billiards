@@ -17,7 +17,11 @@ namespace GyroCue.Input
         [SerializeField]
         private bool lockTouchWhileRemoteActive = true;
 
+        private bool gameplayInputLocked;
+
         public event Action<ShotCommand> ShotReleased;
+
+        public bool GameplayInputLocked => gameplayInputLocked;
 
         public bool IsRemoteCalibrationInProgress =>
             remoteSensorInputAdapter != null && remoteSensorInputAdapter.IsCalibrationInProgress;
@@ -53,12 +57,36 @@ namespace GyroCue.Input
             RefreshInputLocks();
         }
 
+        public void SetGameplayInputLocked(bool locked)
+        {
+            gameplayInputLocked = locked;
+            ResolveReferences();
+            touchAimSwipeController?.SetBallsMoving(locked);
+
+            if (!locked)
+            {
+                RefreshInputLocks();
+            }
+        }
+
         public void RefreshInputLocks()
         {
             ResolveReferences();
 
-            if (!lockTouchWhileRemoteActive || touchAimSwipeController == null || remoteSensorInputAdapter == null)
+            if (touchAimSwipeController == null)
             {
+                return;
+            }
+
+            touchAimSwipeController.SetBallsMoving(gameplayInputLocked);
+            if (gameplayInputLocked)
+            {
+                return;
+            }
+
+            if (!lockTouchWhileRemoteActive || remoteSensorInputAdapter == null)
+            {
+                touchAimSwipeController.SetTouchInputEnabled(true);
                 return;
             }
 
@@ -70,7 +98,7 @@ namespace GyroCue.Input
             shotCommand = default;
 
             ResolveReferences();
-            if (remoteSensorInputAdapter == null)
+            if (gameplayInputLocked || remoteSensorInputAdapter == null)
             {
                 return false;
             }
@@ -120,7 +148,8 @@ namespace GyroCue.Input
 
         private void HandleTouchShotReleased(ShotCommand shotCommand)
         {
-            if (remoteSensorInputAdapter != null && remoteSensorInputAdapter.IsRemoteControlActive)
+            if (gameplayInputLocked ||
+                (remoteSensorInputAdapter != null && remoteSensorInputAdapter.IsRemoteControlActive))
             {
                 return;
             }
@@ -130,6 +159,11 @@ namespace GyroCue.Input
 
         private void HandleRemoteShotReleased(ShotCommand shotCommand)
         {
+            if (gameplayInputLocked)
+            {
+                return;
+            }
+
             ShotReleased?.Invoke(shotCommand);
         }
 
