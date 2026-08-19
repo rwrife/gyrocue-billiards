@@ -33,3 +33,6 @@ UserSettings/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Editor tooling (Unity/VSTU generated)
+.vscode/
