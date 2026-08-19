@@ -8,9 +8,13 @@ references to drift.
 
 - `Title.unity` — `TitleScreenController` builds its canvas at runtime and opens
   `Practice`.
-- `Practice.unity` — **the current focus.** `PracticeTableBuilder` builds the 3D practice
-  table from Unity primitives: slate, split rails, six pocket mouths, cue ball and rack,
-  cue stick, camera and control rig. See [practice-mode.md](../../docs/practice-mode.md).
+- `Practice.unity` — **the current focus.** A man-cave room (brick, wood, bar, fireplace,
+  neon, memorabilia) authored directly in the scene as editor-editable GameObjects under
+  `ManCaveRoom`, with the billiard table at its centre. Gameplay surfaces (playfield,
+  cushions, pockets, balls) are built at runtime by `PracticeTableBuilder`. See
+  [practice-mode.md](../../docs/practice-mode.md) and
+  [man-cave-asset-list.md](../../docs/man-cave-asset-list.md) for the decoration
+  placeholders and what to purchase for each.
 - `MainTable.unity` — the earlier **2D prototype**, driven by `TableSceneBuilder` and the
   `Rigidbody2D` stack. Kept for reference until practice mode covers the same ground.
 
