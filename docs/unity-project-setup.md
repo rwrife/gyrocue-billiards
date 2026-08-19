@@ -4,7 +4,7 @@ This repository now includes a Unity-ready baseline scaffold.
 
 ## Target Editor Version
 
-- **Unity `2022.3.40f1`**
+- **Unity `2022.3.62f3`**
 - Stored in `ProjectSettings/ProjectVersion.txt`
 
 ## Initial Folder Layout
@@ -13,6 +13,28 @@ This repository now includes a Unity-ready baseline scaffold.
 - `Assets/Scripts`
 - `Assets/Prefabs`
 - `Assets/Tests/EditMode`
+- `Assets/Tests/PlayMode`
+
+## Scenes
+
+Both scenes are registered in Build Settings, `Title` first.
+
+- **`Title.unity`** — `TitleScreenController` builds its canvas at runtime and loads
+  `MainTable` from the PLAY button.
+- **`MainTable.unity`** — `TableSceneBuilder` builds the whole playable table at runtime:
+  felt, six cushion rails, six pocket triggers, a cue ball plus a fifteen-ball rack, the
+  input/rules/HUD rig, and camera framing.
+
+Neither scene carries inspector wiring; both are constructed in code, so there are no
+serialized references to drift. Layout comes from `TableLayoutConstants` and
+`TableRackMath`.
+
+## Controls
+
+Drag away from the cue ball to aim, pull back past your start point to build power, then
+release to shoot. `PointerShotInput` maps mouse input onto the same gesture pipeline that
+`TouchAimSwipeController` uses for touch, so the table is playable in the editor.
+After a scratch, click to place the cue ball.
 
 ## Notes
 

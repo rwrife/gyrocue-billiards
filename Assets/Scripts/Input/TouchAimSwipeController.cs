@@ -31,6 +31,7 @@ namespace GyroCue.Input
         private Vector2 latestScreenPosition;
         private Vector2 aimDirection = Vector2.right;
         private float pullDistancePixels;
+        private bool hasEstablishedAim;
         private bool ballsAreMoving;
 
         public event Action<ShotCommand> ShotReleased;
@@ -153,13 +154,23 @@ namespace GyroCue.Input
             gestureStartScreenPosition = screenPosition;
             latestScreenPosition = screenPosition;
             pullDistancePixels = 0f;
+            hasEstablishedAim = false;
         }
 
         private void UpdateGesture(Vector2 screenPosition)
         {
             latestScreenPosition = screenPosition;
             var dragDelta = latestScreenPosition - gestureStartScreenPosition;
-            aimDirection = TouchShotMath.ResolveAimDirection(dragDelta, aimDirection, aimDeadzonePixels);
+
+            // Aim tracks the outward drag until it is established, then latches. Once the
+            // drag reverses past the origin the player is pulling back to charge, so the
+            // aim must hold instead of flipping around to face the pull.
+            if (!hasEstablishedAim || Vector2.Dot(dragDelta, aimDirection) >= 0f)
+            {
+                aimDirection = TouchShotMath.ResolveAimDirection(dragDelta, aimDirection, aimDeadzonePixels);
+                hasEstablishedAim |= dragDelta.sqrMagnitude > aimDeadzonePixels * aimDeadzonePixels;
+            }
+
             pullDistancePixels = TouchShotMath.CalculatePullDistancePixels(
                 gestureStartScreenPosition,
                 latestScreenPosition,
@@ -190,6 +201,7 @@ namespace GyroCue.Input
             isGestureActive = false;
             activeFingerId = -1;
             pullDistancePixels = 0f;
+            hasEstablishedAim = false;
         }
     }
 }

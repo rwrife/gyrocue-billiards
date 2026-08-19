@@ -15,7 +15,7 @@ namespace GyroCue.Core
         private float ballMassKg = 0.17f;
 
         [SerializeField, Min(0f)]
-        private float linearDrag = 0.22f;
+        private float linearDrag = 1.4f;
 
         [SerializeField, Min(0f)]
         private float angularDrag = 0.9f;

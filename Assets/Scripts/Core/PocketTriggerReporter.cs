@@ -12,6 +12,12 @@ namespace GyroCue.Core
         [SerializeField]
         private PocketTableController pocketTableController;
 
+        public PocketTableController PocketTableController
+        {
+            get => pocketTableController;
+            set => pocketTableController = value;
+        }
+
         private void Reset()
         {
             pocketTableController = GetComponentInParent<PocketTableController>();

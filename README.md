@@ -27,14 +27,18 @@ To move quickly, this project is planned as a **Unity-based mobile app** (iOS-fi
 - State machine for turns and rules
 
 ## Unity Baseline (Issue #1)
-- **Unity editor version:** `2022.3.40f1` (documented in `ProjectSettings/ProjectVersion.txt`)
+- **Unity editor version:** `2022.3.62f3` (documented in `ProjectSettings/ProjectVersion.txt`)
 - **Core project folders:** `Assets/Scenes`, `Assets/Scripts`, `Assets/Prefabs`, `Assets/Tests`
 - **Seed runtime script:** `Assets/Scripts/Core/GameBootstrap.cs`
 - **Seed edit-mode test:** `Assets/Tests/EditMode/BootstrapTests.cs`
 - **Packages manifest:** `Packages/manifest.json`
 
 ## Status
-Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, cue indicator + shot preview visualization, a foundational turn state machine, centralized pool physics tuning helpers, baseline pocket-detection/rules signaling scripts, bounded cue-ball-in-hand placement plus foul-gated turn progression, first-pass remote sensor cue integration (aim/shot mapping + instant touch fallback), quick stacked-phone calibration hooks (<10s target with recalibration entry points), a companion-phone streaming prototype (connect/disconnect/start/stop + stable UDP frame cadence), scenario-driven EditMode gameplay tests for turn/foul/win transitions, tabletop anti-jitter + drift-correction filters for remote cue control, a first-pass mobile HUD model/presenter, and a runtime shot lifecycle that locks input, applies cue-ball impulses, detects settled tables, resolves rules, and updates HUD/placement state; next up is turning the `MainTable` placeholders into the first playable rack.
+Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, cue indicator + shot preview visualization, a foundational turn state machine, centralized pool physics tuning helpers, baseline pocket-detection/rules signaling scripts, bounded cue-ball-in-hand placement plus foul-gated turn progression, first-pass remote sensor cue integration (aim/shot mapping + instant touch fallback), quick stacked-phone calibration hooks (<10s target with recalibration entry points), a companion-phone streaming prototype (connect/disconnect/start/stop + stable UDP frame cadence), scenario-driven EditMode gameplay tests for turn/foul/win transitions, tabletop anti-jitter + drift-correction filters for remote cue control, a first-pass mobile HUD model/presenter, and a runtime shot lifecycle that locks input, applies cue-ball impulses, detects settled tables, resolves rules, and updates HUD/placement state.
+
+`MainTable` is now a playable rack: `TableSceneBuilder` constructs felt, six cushion rails, six pocket triggers, a cue ball and a fifteen-ball rack at runtime, wires the input/rules/HUD rig, and frames the camera. A `Title` scene fronts it. Drag to aim, pull back to charge, release to shoot; mouse input is mapped onto the same gesture pipeline so the table plays in the editor. PlayMode tests cover table construction, shot-to-settle, and pocketing.
+
+Next up: 8-ball rules (`IShotRuleResolver` currently falls back to scratch-only detection) and correcting the remote-cue aim mapping, whose two EditMode tests still fail.
 
 ## CI Pipeline (Issue #15)
 A GitHub Actions workflow now lives at `.github/workflows/unity-ci.yml` and runs on push + pull request.

@@ -68,6 +68,18 @@ namespace GyroCue.UI
 
         public MinimalHudSnapshot CurrentSnapshot => hudState.Snapshot;
 
+        /// <summary>
+        /// Binds labels created at runtime, for scenes that build their HUD in code
+        /// instead of authoring it in the inspector.
+        /// </summary>
+        public void ConfigureLabels(Text turn, Text power, Text status)
+        {
+            turnLabel = turn;
+            powerLabel = power;
+            statusLabel = status;
+            RefreshAllLabels();
+        }
+
         public void ResetForNewMatch(bool playerOneStarts = true)
         {
             hudState.ResetMatch(playerOneStarts);

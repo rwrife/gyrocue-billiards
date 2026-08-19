@@ -213,7 +213,11 @@ namespace GyroCue.Core
         private IShotRuleResolver RuleResolver =>
             ruleResolverOverride ?? ruleResolverBehaviour as IShotRuleResolver ?? fallbackRuleResolver;
 
-        public void ConfigureForTests(
+        /// <summary>
+        /// Binds the table this controller drives. Used by runtime scene construction
+        /// and by edit-mode tests through <see cref="ConfigureForTests"/>.
+        /// </summary>
+        public void ConfigureTable(
             Rigidbody2D configuredCueBallBody,
             Rigidbody2D[] configuredBallBodies,
             PoolPhysicsTuningProfile configuredPhysicsProfile,
@@ -232,6 +236,27 @@ namespace GyroCue.Core
             this.settleDebounceSeconds = Mathf.Max(0f, settleDebounceSeconds);
             this.angularStopThresholdDegreesPerSecond = Mathf.Max(0f, angularStopThresholdDegreesPerSecond);
             RebuildSettleDetector();
+        }
+
+        public void ConfigureForTests(
+            Rigidbody2D configuredCueBallBody,
+            Rigidbody2D[] configuredBallBodies,
+            PoolPhysicsTuningProfile configuredPhysicsProfile,
+            PocketTableController configuredPocketTableController,
+            IShotRuleResolver configuredRuleResolver,
+            float maxCueBallImpulse,
+            float settleDebounceSeconds,
+            float angularStopThresholdDegreesPerSecond)
+        {
+            ConfigureTable(
+                configuredCueBallBody,
+                configuredBallBodies,
+                configuredPhysicsProfile,
+                configuredPocketTableController,
+                configuredRuleResolver,
+                maxCueBallImpulse,
+                settleDebounceSeconds,
+                angularStopThresholdDegreesPerSecond);
         }
 
         public bool TryStartShot(ShotCommand shotCommand)

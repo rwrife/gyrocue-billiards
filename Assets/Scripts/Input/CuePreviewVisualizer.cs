@@ -61,7 +61,7 @@ namespace GyroCue.Input
             }
 
             var start = cueBallAnchor != null ? cueBallAnchor.position : transform.position;
-            var direction = new Vector3(aimDirection.x, 0f, aimDirection.y).normalized;
+            var direction = new Vector3(aimDirection.x, aimDirection.y, 0f).normalized;
             var length = Mathf.Max(0.05f, previewLengthWorldUnits);
             var end = start + (direction * length);
 
@@ -76,7 +76,7 @@ namespace GyroCue.Input
             if (cueIndicatorTransform != null)
             {
                 cueIndicatorTransform.position = start;
-                cueIndicatorTransform.rotation = Quaternion.LookRotation(direction, Vector3.up);
+                cueIndicatorTransform.rotation = Quaternion.LookRotation(Vector3.forward, direction);
                 if (!cueIndicatorTransform.gameObject.activeSelf)
                 {
                     cueIndicatorTransform.gameObject.SetActive(true);
