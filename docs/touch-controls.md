@@ -1,5 +1,10 @@
 # Touch Controls (Issue #4)
 
+> **Legacy — 2D prototype.** This describes `TouchAimSwipeController`, the drag-to-aim
+> and pull-to-charge gesture used by the 2D `MainTable` scene. 3D practice mode uses a
+> different scheme — camera-drag aiming plus a ball-face stroke widget — documented in
+> [practice-mode.md](practice-mode.md). Kept for reference until the 2D stack is retired.
+
 This document describes the first-pass single-phone control path implemented in `TouchAimSwipeController`.
 
 ## Gesture model

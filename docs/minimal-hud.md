@@ -1,5 +1,9 @@
 # Minimal HUD (Issue #9)
 
+> **Legacy — 2D prototype.** This describes `MinimalHudPresenter`, the HUD for the 2D
+> `MainTable` scene. 3D practice mode has its own HUD (`PracticeHud`) showing session
+> stats and a live stroke readout. Kept for reference until the 2D stack is retired.
+
 This document covers the first-pass mobile HUD for turn, power, foul, and terminal match state.
 
 ## Added runtime pieces

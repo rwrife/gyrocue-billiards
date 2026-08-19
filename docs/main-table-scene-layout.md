@@ -1,5 +1,10 @@
 # MainTable Scene Layout (Issue #2)
 
+> **Legacy — 2D prototype.** This describes `MainTable.unity`, the original 2D
+> `Rigidbody2D` table. The game has since moved to 3D; the live table layout is
+> `PracticeTableLayout` and is documented in [practice-mode.md](practice-mode.md).
+> Kept for reference until the 2D stack is retired.
+
 This document captures the initial layout scaffolding for `Assets/Scenes/MainTable.unity`.
 
 ## Goals covered

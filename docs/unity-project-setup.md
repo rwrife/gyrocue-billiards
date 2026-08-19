@@ -10,7 +10,8 @@ This repository now includes a Unity-ready baseline scaffold.
 ## Initial Folder Layout
 
 - `Assets/Scenes`
-- `Assets/Scripts`
+- `Assets/Scripts/Practice` — the 3D practice stack
+- `Assets/Scripts/Core`, `Assets/Scripts/Input`, `Assets/Scripts/UI` — the earlier 2D stack
 - `Assets/Prefabs`
 - `Assets/Tests/EditMode`
 - `Assets/Tests/PlayMode`
@@ -29,56 +30,44 @@ serialized references to drift.
 
 ## Practice Mode (3D)
 
-Single player, no turns. Pocketed balls stay down, a scratch just spots the cue ball,
-and clearing the rack re-racks it.
+The current focus, and the first fully 3D part of the game. Single player, no turns:
+pocketed balls stay down, a scratch spots the cue ball, and clearing the rack re-racks it.
 
-Geometry is real-world metres on the XZ plane with the cloth at `y = 0`, driven by
-`PracticeTableLayout`: a 2.54m x 1.27m playfield and 57mm balls. Real units mean Unity's
-default gravity is correct for jump shots with no scaling fudge. The scene sets a 5ms
-fixed timestep, since balls that small and fast otherwise tunnel through a 5cm rail.
+`PracticeTableBuilder` builds the table at runtime from Unity primitives, in real-world
+metres on the XZ plane with the cloth at `y = 0`. Primitives are placeholders for real art.
 
-Primitives are placeholders. Replacing them with real art is a matter of swapping meshes
-and materials — the layout is derived, not authored.
+Drag the table to aim, use the ball-face widget at the bottom to stroke (draw down, slide
+up — speed sets power, stopping point sets the tip contact), and the right-hand strip to
+raise the cue.
 
-### Controls
-
-- **Aim** — drag anywhere on the table to swing the camera around the cue ball. Where
-  the camera looks is where the shot goes.
-- **Stroke** — the widget at the bottom is the cue ball itself. Draw *down* below it to
-  pull the cue back, then slide *up* to deliver. How fast you slide sets the power; where
-  you stop sets the tip contact point, so a fast stroke through the top follows and a
-  stab low on the ball draws. Past half a ball radius from centre the tip miscues.
-- **Elevation** — the strip on the right raises the butt of the cue, up to 70 degrees.
-
-### Shot physics
-
-`CueStrikeMath` turns a stroke into cue-ball motion:
-
-- Tip height gives follow or draw as overspin or backspin, via the solid-sphere result
-  `w = (p x v) * 5 / 2r^2`.
-- Tip offset left or right gives english about the vertical axis.
-- An elevated cue trades horizontal speed for lift, but only when striking *above*
-  centre — high tip, steep cue, and power together make the ball leave the cloth, while
-  the same cue below centre scoops instead.
-
-`ClothContactMotion` does the part PhysX will not: while the contact patch is sliding it
-applies friction to the ball's velocity *and* its spin, which is what turns backspin into
-draw. Once the patch stops sliding the ball rolls under rolling resistance alone.
+Full detail — table geometry, control mapping, the strike and cloth-contact physics, and
+how to run the tests — is in **[practice-mode.md](practice-mode.md)**.
 
 ## Notes
 
 - `GameBootstrap` sets baseline runtime defaults for mobile framerate behavior.
 - `BootstrapTests` provides a starter edit-mode test using Unity Test Framework.
-- `Packages/manifest.json` includes core mobile/input/test dependencies.
+- `Packages/manifest.json` includes core mobile/input/test dependencies, and both
+  `com.unity.modules.physics` (3D, used by practice mode) and `com.unity.modules.physics2d`
+  (used by the legacy 2D scene).
+- The `CueBall` tag is registered in `ProjectSettings/TagManager.asset`; the 2D pocket
+  controller falls back to it when no cue-ball reference is set.
 
 ## Next Recommended Steps
 
-1. Wire `TouchAimSwipeController.ShotReleased` into cue-ball force application once physics tuning lands.
-2. Replace `MainTable` placeholders with colliders/sprites/materials for playable geometry.
-3. Add deterministic gameplay logic tests for turn transitions and foul handling.
+1. Replace the practice-mode primitives with real 3D art (meshes and materials only — the
+   layout is derived, not authored).
+2. Add practice goals: drills, targets, or a shot clock, so the mode has something to
+   practise against.
+3. Port match rules to 3D, then retire the 2D `MainTable` stack.
+4. Fix the `RemoteSensorInputAdapter` aim mapping before resuming dual-phone work.
 
 ## Recently Completed
 
+- Pivoted to 3D: `Assets/Scenes/Practice.unity` plus `Assets/Scripts/Practice/` implement a
+  single-player 3D practice table with stroke-based cue control and jump-shot physics.
+- Editor upgraded to `2022.3.62f3`; generated `.meta` files and `ProjectSettings` committed.
+- `Assets/Scenes/Title.unity` added; opens practice mode.
 - `Assets/Scenes/MainTable.unity` scaffold added with camera + table placeholder hierarchy.
 - `Assets/Scripts/Core/TableLayoutConstants.cs` added for shared layout sizing and aspect-fit camera math.
 - `docs/main-table-scene-layout.md` documents initial coordinates/object layout.

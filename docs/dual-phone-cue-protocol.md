@@ -1,5 +1,19 @@
 # Dual-phone cue sensor protocol (Issue #10)
 
+> **Deprioritised by the 3D pivot.** The wire protocol below is unchanged and still
+> accurate, but dual-phone cue work is paused while single-player practice mode is built
+> out. There is also a known defect in the game-side mapping: `RemoteSensorInputAdapter`
+> resolves an aim direction roughly 90 degrees away from what its own tests expect, so
+> `RemoteSensorInputAdapterTests.ProcessSensorFrame_UpdatesAimAndReleasesShot` and
+> `CuePreviewVisualizerTests.RefreshVisuals_WithFreshRemoteFrames_PrefersRemoteAimDirection`
+> both fail. Either the aim smoothing or the stationary-frame gate added by the tabletop
+> stability filters is suppressing the update. Fix that before resuming. Tracked in
+> issue #36.
+>
+> Note also that aiming is now 3D: any resumed work must produce an aim on the XZ plane
+> to match `PracticeTableLayout`, not the XY plane the 2D prototype used.
+
+
 This document defines the wire contract between the optional companion phone (sensor source) and the game phone (Unity table app).
 
 ## Versioning
