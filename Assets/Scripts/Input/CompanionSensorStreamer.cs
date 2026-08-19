@@ -195,7 +195,7 @@ namespace GyroCue.Input
 
             if (autoEnableGyroOnConnect)
             {
-                Input.gyro.enabled = true;
+                UnityEngine.Input.gyro.enabled = true;
             }
 
             return true;
@@ -367,9 +367,9 @@ namespace GyroCue.Input
                 return;
             }
 
-            var orientation = SystemInfo.supportsGyroscope ? Input.gyro.attitude : Quaternion.identity;
-            var angularVelocity = SystemInfo.supportsGyroscope ? Input.gyro.rotationRateUnbiased : Vector3.zero;
-            var acceleration = Input.acceleration * GravityMps2;
+            var orientation = SystemInfo.supportsGyroscope ? UnityEngine.Input.gyro.attitude : Quaternion.identity;
+            var angularVelocity = SystemInfo.supportsGyroscope ? UnityEngine.Input.gyro.rotationRateUnbiased : Vector3.zero;
+            var acceleration = UnityEngine.Input.acceleration * GravityMps2;
 
             StreamFrame(
                 orientation,
