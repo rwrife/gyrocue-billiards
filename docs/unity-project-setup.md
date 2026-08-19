@@ -17,24 +17,53 @@ This repository now includes a Unity-ready baseline scaffold.
 
 ## Scenes
 
-Both scenes are registered in Build Settings, `Title` first.
+All three scenes are registered in Build Settings, `Title` first.
 
-- **`Title.unity`** — `TitleScreenController` builds its canvas at runtime and loads
-  `MainTable` from the PLAY button.
-- **`MainTable.unity`** — `TableSceneBuilder` builds the whole playable table at runtime:
-  felt, six cushion rails, six pocket triggers, a cue ball plus a fifteen-ball rack, the
-  input/rules/HUD rig, and camera framing.
+- **`Title.unity`** — builds its canvas at runtime and opens `Practice`.
+- **`Practice.unity`** — the current focus. `PracticeTableBuilder` builds the 3D table
+  from Unity primitives at runtime and wires the whole control rig.
+- **`MainTable.unity`** — the earlier 2D prototype, kept for reference.
 
-Neither scene carries inspector wiring; both are constructed in code, so there are no
-serialized references to drift. Layout comes from `TableLayoutConstants` and
-`TableRackMath`.
+No scene carries inspector wiring; each is constructed in code, so there are no
+serialized references to drift.
 
-## Controls
+## Practice Mode (3D)
 
-Drag away from the cue ball to aim, pull back past your start point to build power, then
-release to shoot. `PointerShotInput` maps mouse input onto the same gesture pipeline that
-`TouchAimSwipeController` uses for touch, so the table is playable in the editor.
-After a scratch, click to place the cue ball.
+Single player, no turns. Pocketed balls stay down, a scratch just spots the cue ball,
+and clearing the rack re-racks it.
+
+Geometry is real-world metres on the XZ plane with the cloth at `y = 0`, driven by
+`PracticeTableLayout`: a 2.54m x 1.27m playfield and 57mm balls. Real units mean Unity's
+default gravity is correct for jump shots with no scaling fudge. The scene sets a 5ms
+fixed timestep, since balls that small and fast otherwise tunnel through a 5cm rail.
+
+Primitives are placeholders. Replacing them with real art is a matter of swapping meshes
+and materials — the layout is derived, not authored.
+
+### Controls
+
+- **Aim** — drag anywhere on the table to swing the camera around the cue ball. Where
+  the camera looks is where the shot goes.
+- **Stroke** — the widget at the bottom is the cue ball itself. Draw *down* below it to
+  pull the cue back, then slide *up* to deliver. How fast you slide sets the power; where
+  you stop sets the tip contact point, so a fast stroke through the top follows and a
+  stab low on the ball draws. Past half a ball radius from centre the tip miscues.
+- **Elevation** — the strip on the right raises the butt of the cue, up to 70 degrees.
+
+### Shot physics
+
+`CueStrikeMath` turns a stroke into cue-ball motion:
+
+- Tip height gives follow or draw as overspin or backspin, via the solid-sphere result
+  `w = (p x v) * 5 / 2r^2`.
+- Tip offset left or right gives english about the vertical axis.
+- An elevated cue trades horizontal speed for lift, but only when striking *above*
+  centre — high tip, steep cue, and power together make the ball leave the cloth, while
+  the same cue below centre scoops instead.
+
+`ClothContactMotion` does the part PhysX will not: while the contact patch is sliding it
+applies friction to the ball's velocity *and* its spin, which is what turns backspin into
+draw. Once the patch stops sliding the ball rolls under rolling resistance alone.
 
 ## Notes
 

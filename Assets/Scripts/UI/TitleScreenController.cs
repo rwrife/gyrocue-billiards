@@ -42,14 +42,14 @@ namespace GyroCue.UI
 
         [Header("Navigation")]
         [SerializeField]
-        private string gameplaySceneName = "MainTable";
+        private string gameplaySceneName = "Practice";
 
         [Header("Copy")]
         [SerializeField]
         private string titleText = "GYROCUE";
 
         [SerializeField]
-        private string subtitleText = "Dual-Phone Billiards";
+        private string subtitleText = "Practice Mode";
 
         [Header("Palette")]
         [SerializeField]

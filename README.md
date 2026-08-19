@@ -36,9 +36,23 @@ To move quickly, this project is planned as a **Unity-based mobile app** (iOS-fi
 ## Status
 Unity mobile-first scaffold is in-repo, with initial `MainTable` scene layout, first-pass touch aim + swipe-shot input scripts, cue indicator + shot preview visualization, a foundational turn state machine, centralized pool physics tuning helpers, baseline pocket-detection/rules signaling scripts, bounded cue-ball-in-hand placement plus foul-gated turn progression, first-pass remote sensor cue integration (aim/shot mapping + instant touch fallback), quick stacked-phone calibration hooks (<10s target with recalibration entry points), a companion-phone streaming prototype (connect/disconnect/start/stop + stable UDP frame cadence), scenario-driven EditMode gameplay tests for turn/foul/win transitions, tabletop anti-jitter + drift-correction filters for remote cue control, a first-pass mobile HUD model/presenter, and a runtime shot lifecycle that locks input, applies cue-ball impulses, detects settled tables, resolves rules, and updates HUD/placement state.
 
-`MainTable` is now a playable rack: `TableSceneBuilder` constructs felt, six cushion rails, six pocket triggers, a cue ball and a fifteen-ball rack at runtime, wires the input/rules/HUD rig, and frames the camera. A `Title` scene fronts it. Drag to aim, pull back to charge, release to shoot; mouse input is mapped onto the same gesture pipeline so the table plays in the editor. PlayMode tests cover table construction, shot-to-settle, and pocketing.
+The project has pivoted to **3D primitives and a single-player practice mode**.
+`Practice.unity` builds a real-scale 3D table at runtime — slate, split rails, six pocket
+mouths, cue ball and rack — and wires an aim/stroke/elevation control rig. Drag the table
+to aim; the widget at the bottom is the cue ball, where you draw down and stroke up, with
+stroke speed setting power and the stopping point setting the tip contact. Tip height
+gives follow and draw, tip offset gives english, and an elevated cue struck above centre
+jumps the ball. Primitives are placeholders for real art later.
 
-Next up: 8-ball rules (`IShotRuleResolver` currently falls back to scratch-only detection) and correcting the remote-cue aim mapping, whose two EditMode tests still fail.
+`Title.unity` fronts it. `MainTable.unity` is the earlier 2D prototype, kept for
+reference. See `docs/unity-project-setup.md` for controls and the physics model.
+
+Verified against 2022.3.62f3: EditMode 98/100, PlayMode 8/8. The two EditMode failures
+are pre-existing and both in the dual-phone remote-cue path, which the pivot
+deprioritises: `RemoteSensorInputAdapter` returns an aim direction roughly 90 degrees off
+what its tests expect.
+
+Next up: real 8-ball or drill-based practice goals, aim assist / target line, and art.
 
 ## CI Pipeline (Issue #15)
 A GitHub Actions workflow now lives at `.github/workflows/unity-ci.yml` and runs on push + pull request.
