@@ -9,14 +9,23 @@ no serialized references to drift.
 
 ## Graphics status
 
-Everything on the table is a Unity primitive — cubes for the slate and rails, cylinders
-for the pocket mouths and cue, spheres for the balls. **These are deliberate
-placeholders.** Because every position is derived from `PracticeTableLayout` rather than
-authored in the scene, replacing them with real art is a matter of swapping meshes and
-materials; no layout has to be re-derived.
+The table sits in the centre of a **man-cave room** — brick and wood-panelled walls,
+a bar with stools and bottle shelves, a fireplace, neon signs, a TV, a dartboard,
+game machines and shelves of memorabilia — with dramatic warm lighting from pendant
+spots over the table, a fireplace glow, and coloured neon washes. Drag anywhere on
+the table to orbit the camera and take the room in.
 
-Materials resolve `Universal Render Pipeline/Lit` and fall back to `Standard`, so the
-scene renders under either pipeline.
+**The room is a fixed scene asset, not code.** Every wall, prop and light is a plain
+GameObject under `ManCaveRoom` in `Practice.unity`, using material assets from
+`Assets/Materials/ManCave/` — select, move, re-light or replace any of it in the Unity
+editor without touching a script. Objects standing in for store purchases are grouped
+under `PH_*` parents; the full shopping list mapping each placeholder to the asset to
+buy is in [man-cave-asset-list.md](man-cave-asset-list.md).
+
+Only the gameplay surfaces stay code-built (`PracticeTableBuilder`): playfield, cushions,
+pockets, balls and cue, because their dimensions are load-bearing for physics. The
+builder's `createLighting` flag is off in this scene so the room's authored lights and
+ambient win.
 
 ## Table geometry
 

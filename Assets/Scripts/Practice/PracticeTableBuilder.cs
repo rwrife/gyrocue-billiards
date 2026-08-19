@@ -28,6 +28,10 @@ namespace GyroCue.Practice
         [SerializeField, Min(0.001f)]
         private float physicsStepSeconds = 0.005f;
 
+        [Tooltip("Off when the scene provides its own lights and ambient, like the man-cave room.")]
+        [SerializeField]
+        private bool createLighting = true;
+
         private readonly List<Rigidbody> objectBalls = new List<Rigidbody>();
         private readonly List<PracticePocket> pockets = new List<PracticePocket>();
 
@@ -53,7 +57,11 @@ namespace GyroCue.Practice
             Time.fixedDeltaTime = physicsStepSeconds;
 
             CreateMaterials();
-            BuildLighting();
+            if (createLighting)
+            {
+                BuildLighting();
+            }
+
             BuildSlate();
             BuildRails();
             BuildPockets();
