@@ -124,11 +124,18 @@ roll.
 - Clearing the rack re-racks it.
 - Input is locked while balls are moving and unlocks once the table settles.
 
+The runtime-built balls now carry stable `BallIdentity` numbers and use the standard
+`EightBallRack` order. A `CueBallContactTracker` records the first object-ball contact for
+each stroke. Practice deliberately ignores match turns and terminal results, but shares
+those physical identity/contact hooks with the 3D local-match rules described in
+[eight-ball-rules.md](eight-ball-rules.md).
+
 ## Tests
 
 - **EditMode** — `CueStrikeMathTests`, `CueStrokeGestureTests`, `PracticeTableLayoutTests`,
-  `PracticeControlLayoutTests` cover the pure strike physics, the stroke state machine,
-  and the two layout tables.
+  `PracticeControlLayoutTests`, and `EightBallRulesTests` cover the pure strike physics,
+  stroke state machine, layout tables, numbered rack, group assignment, foul/terminal
+  outcomes, reset, and first-contact capture.
 - **PlayMode** — `PracticeTablePlayTests` loads the real scene and checks that it builds,
   that a shot settles without balls escaping the table, that a draw shot pulls the cue
   ball back behind the contact point, that an elevated high strike clears a full ball

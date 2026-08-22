@@ -206,19 +206,30 @@ namespace GyroCue.Practice
 
         private void BuildBalls()
         {
-            CueBall = CreateBall("CueBall", PracticeTableLayout.CueBallSpot, Color.white);
+            CueBall = CreateBall(
+                "CueBall",
+                EightBallBall.CueBallNumber,
+                PracticeTableLayout.CueBallSpot,
+                Color.white);
+            CueBall.gameObject.AddComponent<CueBallContactTracker>();
 
             var rack = PracticeTableLayout.RackPositions(
                 PracticeTableLayout.RackApex,
                 PracticeTableLayout.BallRadiusMetres);
+            var ballNumbers = EightBallRack.StandardBallNumbers;
 
             for (var i = 0; i < rack.Length; i++)
             {
-                objectBalls.Add(CreateBall($"Ball{i + 1}", rack[i], BallColors[i % BallColors.Length]));
+                var ballNumber = ballNumbers[i];
+                objectBalls.Add(CreateBall(
+                    $"Ball{ballNumber}",
+                    ballNumber,
+                    rack[i],
+                    BallColors[ballNumber - 1]));
             }
         }
 
-        private Rigidbody CreateBall(string name, Vector3 position, Color color)
+        private Rigidbody CreateBall(string name, int ballNumber, Vector3 position, Color color)
         {
             var radius = PracticeTableLayout.BallRadiusMetres;
             var ball = CreatePrimitive(PrimitiveType.Sphere, name, CreateMaterial(color));
@@ -236,6 +247,7 @@ namespace GyroCue.Practice
             body.interpolation = RigidbodyInterpolation.Interpolate;
             body.maxAngularVelocity = 400f;
 
+            ball.AddComponent<BallIdentity>().Configure(ballNumber);
             ball.AddComponent<ClothContactMotion>().Configure(radius);
             return body;
         }

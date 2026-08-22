@@ -50,6 +50,13 @@ jumps the ball. All geometry is Unity primitives standing in for real art.
 See **[docs/practice-mode.md](docs/practice-mode.md)** for controls, table geometry, and
 the physics model.
 
+The 3D stack now also has a pure, casual **8-ball rules core**: numbered ball identities,
+a legal standard rack/reset, open-table group assignment, remaining-ball scores, first-contact
+and scratch/wrong-group fouls, concise HUD-ready reasons, and legal/illegal 8-ball outcomes.
+Practice remains single player; the local two-player match shell will consume this core next.
+See **[docs/eight-ball-rules.md](docs/eight-ball-rules.md)** for the contract and intentional
+simplifications.
+
 ### What is and is not 3D yet
 
 `Practice.unity` and everything under `Assets/Scripts/Practice/` are 3D. The earlier 2D
@@ -67,8 +74,8 @@ pre-existing and both in the dual-phone remote-cue path, which the pivot deprior
 `RemoteSensorInputAdapter` returns an aim direction roughly 90 degrees off what its tests
 expect. Tracked in issue #36.
 
-Next up: practice drills and goals, real art in place of the primitives, 8-ball rules, and
-retiring the 2D stack.
+Next up: wire the 8-ball core into a local two-player match shell, add practice drills and
+goals, replace gameplay primitives with real art, and retire the 2D stack.
 
 ## CI Pipeline (Issue #15)
 A GitHub Actions workflow now lives at `.github/workflows/unity-ci.yml` and runs on push + pull request.

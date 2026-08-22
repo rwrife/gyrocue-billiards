@@ -27,6 +27,7 @@ namespace GyroCue.Practice
         private readonly List<ClothContactMotion> ballMotions = new List<ClothContactMotion>();
 
         private Rigidbody cueBall;
+        private CueBallContactTracker cueBallContactTracker;
         private PracticeInputRouter inputRouter;
         private OrbitAimController orbitAim;
         private CueStickView cueStick;
@@ -45,6 +46,10 @@ namespace GyroCue.Practice
         public int Scratches { get; private set; }
 
         public bool LastShotMiscued { get; private set; }
+
+        public int FirstContactBallNumber => cueBallContactTracker != null
+            ? cueBallContactTracker.FirstContactBallNumber
+            : EightBallShotRecord.NoBall;
 
         public int BallsRemaining
         {
@@ -72,6 +77,9 @@ namespace GyroCue.Practice
             CueStickView cueStickView)
         {
             cueBall = cueBallBody;
+            cueBallContactTracker = cueBallBody != null
+                ? cueBallBody.GetComponent<CueBallContactTracker>()
+                : null;
             inputRouter = router;
             orbitAim = orbitAimController;
             cueStick = cueStickView;
@@ -114,6 +122,7 @@ namespace GyroCue.Practice
                 PracticeTableLayout.BallRadiusMetres,
                 maxBallSpeedMetresPerSecond);
 
+            cueBallContactTracker?.BeginShot();
             cueBall.velocity = result.LinearVelocity;
             cueBall.angularVelocity = result.AngularVelocity;
 
@@ -153,11 +162,20 @@ namespace GyroCue.Practice
                     continue;
                 }
 
+                var identity = ball.GetComponent<BallIdentity>();
+                var rackSlot = identity != null
+                    ? EightBallRack.RackSlotFor(identity.BallNumber)
+                    : i;
+                if (rackSlot < 0 || rackSlot >= positions.Length)
+                {
+                    continue;
+                }
+
                 ball.gameObject.SetActive(true);
                 ball.velocity = Vector3.zero;
                 ball.angularVelocity = Vector3.zero;
-                ball.position = positions[i];
-                ball.transform.position = positions[i];
+                ball.position = positions[rackSlot];
+                ball.transform.position = positions[rackSlot];
             }
 
             SpotCueBall();

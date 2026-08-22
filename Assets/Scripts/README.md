@@ -27,6 +27,11 @@ README section in the repository root for what is and is not 3D yet.
   - `CueStickView.cs` places a primitive cue behind the ball for the current aim, draw,
     tip offset, and elevation.
   - `PracticePocket.cs` reports balls whose centre drops into a pocket mouth.
+  - `BallIdentity.cs` gives the cue and 15 object balls stable rule identities independent
+    of GameObject names, colours, and rack-list order.
+  - `CueBallContactTracker.cs` records the first numbered object ball touched by each 3D shot.
+  - `EightBallRules.cs` owns the deterministic standard rack, open-table group assignment,
+    scores/remaining balls, casual fouls, HUD-ready reasons, and 8-ball win/loss outcomes.
   - `PracticeSessionController.cs` runs the single-player loop: stroke to shot, settle
     detection, pocketing, scratch spotting, and re-rack.
   - `PracticeHud.cs` shows session stats, a live stroke readout, and the control widgets.
