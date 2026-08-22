@@ -36,3 +36,19 @@ Thumbs.db
 
 # Editor tooling (Unity/VSTU generated)
 .vscode/
+
+# Brick Textures 4k (3.8GB imported pack): only the red_brick_03 maps that the
+# man-cave wall materials reference are tracked; re-download the pack from the
+# Asset Store for the rest.
+Assets/TextureHaven/**
+!Assets/TextureHaven/bricks_4k.meta
+!Assets/TextureHaven/bricks_4k/
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures.meta
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/red_brick_03.meta
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/red_brick_03/
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/red_brick_03/red_brick_03_diff_4k.png*
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/red_brick_03/red_brick_03_nor_4k.png*
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/red_brick_03/red_brick_03_ao_4k.png*
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/red_brick_03/red_brick_03_disp_4k.png*
+!Assets/TextureHaven/bricks_4k/bricks_4k_textures/red_brick_03/red_brick_03_SpecSmoothness.png*
