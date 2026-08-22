@@ -26,7 +26,10 @@ namespace GyroCue.Practice
 
         private Camera targetCamera;
         private Transform focus;
-        private float yawDegrees;
+        // The table's long axis runs along +X and the rack sits at +X of the cue
+        // ball, so the session opens looking down the table at the racked balls
+        // rather than across it at a side rail.
+        private float yawDegrees = 90f;
         private float pitchDegrees = 26f;
 
         /// <summary>Horizontal aim on the cloth plane, pointing away from the camera.</summary>
