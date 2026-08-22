@@ -1,0 +1,24 @@
+fileFormatVersion: 2
+guid: de2734cbe5ff4f28b1eac162d2395905
+ModelImporter:
+  serializedVersion: 22200
+  externalObjects: {}
+  materials:
+    materialImportMode: 2
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    useSRGBMaterialColor: 1
+    importVisibility: 1
+    importBlendShapes: 0
+    importCameras: 0
+    importLights: 0
+  animationType: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
