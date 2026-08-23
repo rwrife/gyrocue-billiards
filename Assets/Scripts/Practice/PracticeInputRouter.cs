@@ -27,6 +27,7 @@ namespace GyroCue.Practice
         private DragTarget activeTarget = DragTarget.None;
         private Vector2 lastPointerPosition;
         private bool inputLocked;
+        private bool remoteInputActive;
 
         public event Action<CueStrokeSample> StrokeCompleted;
 
@@ -35,6 +36,8 @@ namespace GyroCue.Practice
         public float ElevationDegrees { get; private set; }
 
         public bool InputLocked => inputLocked;
+
+        public bool RemoteInputActive => remoteInputActive;
 
         public void Configure(OrbitAimController orbitController)
         {
@@ -51,9 +54,19 @@ namespace GyroCue.Practice
             }
         }
 
+        public void SetRemoteInputActive(bool active)
+        {
+            remoteInputActive = active;
+            if (active)
+            {
+                activeTarget = DragTarget.None;
+                strokeGesture.Cancel();
+            }
+        }
+
         private void Update()
         {
-            if (inputLocked)
+            if (inputLocked || remoteInputActive)
             {
                 return;
             }

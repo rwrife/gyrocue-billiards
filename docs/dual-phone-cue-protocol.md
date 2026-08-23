@@ -1,18 +1,19 @@
-# Dual-phone cue sensor protocol (Issue #10)
+# Dual-phone cue sensor protocol (Issues #10 and #36)
 
-> **Deprioritised by the 3D pivot.** The wire protocol below is unchanged and still
-> accurate, but dual-phone cue work is paused while single-player practice mode is built
-> out. There is also a known defect in the game-side mapping: `RemoteSensorInputAdapter`
-> resolves an aim direction roughly 90 degrees away from what its own tests expect, so
-> `RemoteSensorInputAdapterTests.ProcessSensorFrame_UpdatesAimAndReleasesShot` and
-> `CuePreviewVisualizerTests.RefreshVisuals_WithFreshRemoteFrames_PrefersRemoteAimDirection`
-> both fail. Either the aim smoothing or the stationary-frame gate added by the tabletop
-> stability filters is suppressing the update. Fix that before resuming. Tracked in
-> issue #36.
->
-> Note also that aiming is now 3D: any resumed work must produce an aim on the XZ plane
-> to match `PracticeTableLayout`, not the XY plane the 2D prototype used.
+The 3D `Practice` table now includes an opt-in UDP receiver and setup panel. The wire
+protocol remains `gyrocue.sensor.v1`; fresh remote frames steer the table on the XZ
+plane and trigger strokes, while stale/disconnected sessions immediately restore the
+normal touch controls.
 
+The input mapping is deliberately hybrid for a casual two-phone setup:
+
+- cue-phone heading sets horizontal table aim;
+- forward acceleration sets stroke power/release;
+- the game phone's ball-face and elevation widgets retain tip offset and cue elevation.
+
+A stationary cue phone **does** set aim. Its first valid heading is applied immediately;
+subsequent stationary movement is drift-clamped. This resolves the former 90-degree
+mapping failure without making a held phone unresponsive.
 
 This document defines the wire contract between the optional companion phone (sensor source) and the game phone (Unity table app).
 
@@ -155,4 +156,59 @@ The controller provides `SessionStatusText` so a companion UI can display clear 
 - `DisconnectFromTarget()` closes transport and resets sequence/timing state.
 - `StreamFrame(...)` enforces a stable send cadence via `streamRateHz` (default 60 Hz), serializes `RemoteCueSensorFrame` JSON payloads, and increments sequence monotonically.
 
-This keeps issue #11 scoped to a mergeable prototype while preserving compatibility with the existing receiver-side contract in issue #13.
+This keeps issue #11 scoped to a mergeable prototype while preserving compatibility with the receiver-side contract.
+
+## Game-phone receiver and setup panel (Issue #36)
+
+`RemoteCueUdpReceiver` binds UDP port `28745` only after the player taps **Listen**.
+The blocking socket and JSON validation run on a worker task. Accepted frames enter a
+bounded queue; the main thread drains only the newest frame, so a burst cannot make
+Unity replay stale motion. The first valid sender owns the session until disconnect,
+and duplicate/out-of-order sequence numbers and packets from other senders are ignored.
+
+The setup panel shows:
+
+- the game phone's listening IPv4 address and port;
+- `OFF`, `LISTENING`, `CONNECTED`, `STALE`, or `ERROR` state;
+- paired sender and last-frame age;
+- actionable socket/malformed-packet guidance;
+- **Listen/Retry**, **Disconnect**, **Calibrate**, and **Use touch** actions.
+
+`RemoteCueUdpReceiver` closes the socket on disable or app pause. If it had been
+listening, it starts a fresh session on resume, allowing the sender and sequence counter
+to reconnect cleanly. A stale stream releases `PracticeInputRouter` immediately and
+keeps the game playable with touch.
+
+## Two-device setup walkthrough
+
+1. Put both phones on the same trusted Wi-Fi network. Guest networks may isolate devices.
+2. On the **game phone**, open `Practice` and tap **Listen** in the cue-phone panel.
+3. Note the displayed address, for example `192.168.1.42:28745`.
+4. On the **cue phone**, enter that host and UDP port in the companion screen, connect,
+   and start streaming `gyrocue.sensor.v1` frames.
+5. When the game phone says **CONNECTED**, stack/align the phones and tap **Calibrate**.
+6. Lift the cue phone. Its heading aims; a forward stroke releases the shot. Set spin
+   and elevation with the game phone's existing ball-face/right-edge widgets.
+7. Tap **Use touch** at any time to close the listener and return to touch-only play.
+
+If state becomes **STALE**, confirm both phones remain on the same LAN, disable VPN or
+client isolation, and reconnect. Malformed packets and unexpected senders are ignored;
+they do not freeze gameplay.
+
+## Mobile local-network permissions
+
+### iOS / iPadOS
+
+The post-build hook at `Assets/Editor/LocalNetworkPermissionPostprocessor.cs` adds
+`NSLocalNetworkUsageDescription` to the generated Xcode `Info.plist`. The first listen
+may show Apple's Local Network prompt; allow it. If denied, enable **Settings → Privacy
+& Security → Local Network → GyroCue** before retrying. No Bonjour service is advertised;
+the player enters/reads the numeric LAN address directly.
+
+### Android
+
+`PlayerSettings` forces the normal `android.permission.INTERNET` permission so UDP LAN
+traffic is available in builds. It is install-time and does not show a runtime prompt.
+GyroCue does not scan SSIDs or nearby devices, so it does not request location or
+`NEARBY_WIFI_DEVICES`. Vendor firewalls/VPNs can still block peer-to-peer UDP; keep both
+phones on the same non-isolated Wi-Fi network.

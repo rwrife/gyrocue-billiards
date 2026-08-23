@@ -391,6 +391,29 @@ namespace GyroCue.Tests.EditMode
             }
         }
 
+        [Test]
+        public void AimDirection3D_ProjectsPhoneHeadingOntoTableXZPlane()
+        {
+            var root = new GameObject("remote-adapter-3d-aim-test");
+
+            try
+            {
+                var adapter = root.AddComponent<RemoteSensorInputAdapter>();
+                adapter.SetTimeProviderForTests(() => 80f);
+                adapter.ProcessSensorFrame(
+                    CreateFrame(0, Quaternion.Euler(0f, 90f, 0f), Vector3.zero),
+                    out _);
+
+                Assert.That(adapter.AimDirection3D.x, Is.GreaterThan(0.95f));
+                Assert.That(adapter.AimDirection3D.y, Is.EqualTo(0f));
+                Assert.That(Mathf.Abs(adapter.AimDirection3D.z), Is.LessThan(0.05f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static RemoteCueSensorFrame CreateFrame(long sequence, Quaternion orientation, Vector3 accelerationMps2)
         {
             return CreateFrame(sequence, orientation, accelerationMps2, Vector3.zero);

@@ -94,6 +94,9 @@ namespace GyroCue.Input
 
         public Vector2 AimDirection => aimDirection;
 
+        /// <summary>Current heading projected onto the 3D practice table's XZ plane.</summary>
+        public Vector3 AimDirection3D => RemotePracticeCueMapping.ToTableAim(aimDirection);
+
         public float PreviewPower01 => previewPower01;
 
         public bool RemoteInputEnabled => remoteInputEnabled;
@@ -154,6 +157,7 @@ namespace GyroCue.Input
             {
                 previewPower01 = 0f;
                 lastFrameReceivedRealtime = float.NegativeInfinity;
+                lastSequence = -1;
                 shotTriggerArmed = true;
                 calibrationInProgress = false;
                 ResetCalibrationAccumulators();
@@ -210,7 +214,7 @@ namespace GyroCue.Input
                 return false;
             }
 
-            if (frame.Sequence < lastSequence)
+            if (frame.Sequence <= lastSequence)
             {
                 return false;
             }
@@ -354,8 +358,13 @@ namespace GyroCue.Input
             {
                 if (!stationaryAimAnchorActive)
                 {
-                    stationaryAimAnchor = aimDirection;
+                    // A phone held still still expresses an intentional heading. The
+                    // first frame establishes that heading immediately; only later
+                    // stationary changes are treated as sensor drift.
+                    aimDirection = candidate;
+                    stationaryAimAnchor = candidate;
                     stationaryAimAnchorActive = true;
+                    return;
                 }
 
                 candidate = ClampAimStep(stationaryAimAnchor, candidate, stationaryAimDriftClampDegrees);

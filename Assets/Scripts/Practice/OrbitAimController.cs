@@ -55,6 +55,18 @@ namespace GyroCue.Practice
             focus = focusTransform;
         }
 
+        /// <summary>Sets horizontal aim from a world-space XZ direction.</summary>
+        public void SetAimDirection(Vector3 tableDirection)
+        {
+            var horizontal = new Vector2(tableDirection.x, tableDirection.z);
+            if (horizontal.sqrMagnitude < 0.0001f)
+            {
+                return;
+            }
+
+            yawDegrees = Mathf.Atan2(horizontal.x, horizontal.y) * Mathf.Rad2Deg;
+        }
+
         /// <summary>Applies a drag in pixels. Called by the practice input router.</summary>
         public void ApplyDrag(Vector2 dragPixels)
         {
