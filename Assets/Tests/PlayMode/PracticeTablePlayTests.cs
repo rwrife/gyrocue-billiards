@@ -1,4 +1,5 @@
 using System.Collections;
+using GyroCue.Input;
 using GyroCue.Practice;
 using NUnit.Framework;
 using UnityEngine;
@@ -37,6 +38,9 @@ namespace GyroCue.Tests.PlayMode
             Assert.That(builder.Pockets.Count, Is.EqualTo(6));
             Assert.That(session, Is.Not.Null);
             Assert.That(session.Phase, Is.EqualTo(PracticePhase.Aiming));
+            Assert.That(Object.FindObjectOfType<RemoteCueUdpReceiver>(), Is.Not.Null);
+            Assert.That(Object.FindObjectOfType<RemotePracticeCueController>(), Is.Not.Null);
+            Assert.That(Object.FindObjectOfType<RemoteCueSetupPanel>(), Is.Not.Null);
 
             // Everything must start resting on the cloth, not intersecting it.
             Assert.That(

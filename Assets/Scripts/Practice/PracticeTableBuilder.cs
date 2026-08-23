@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using GyroCue.Input;
 using UnityEngine;
 
 namespace GyroCue.Practice
@@ -281,6 +282,16 @@ namespace GyroCue.Practice
             Session.Configure(CueBall, objectBalls, pockets, router, orbit, cueStick);
 
             gameObject.AddComponent<PracticeHud>().Configure(Session, router, orbit);
+
+            var remoteAdapter = gameObject.AddComponent<RemoteSensorInputAdapter>();
+            var remoteReceiver = gameObject.AddComponent<RemoteCueUdpReceiver>();
+            gameObject.AddComponent<RemotePracticeCueController>().Configure(
+                remoteReceiver,
+                remoteAdapter,
+                orbit,
+                router,
+                Session);
+            gameObject.AddComponent<RemoteCueSetupPanel>().Configure(remoteReceiver, remoteAdapter);
         }
 
         private GameObject CreatePrimitive(PrimitiveType type, string name, Material material)
