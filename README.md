@@ -67,12 +67,22 @@ prototype has not been removed: `MainTable.unity` and the `Rigidbody2D` stack it
 still reachable from Build Settings. They are kept for reference until practice mode
 covers the same ground; the game is not yet *only* 3D.
 
-`Title.unity` fronts the game and opens `Practice`.
+`Title.unity` fronts the game with an explicit playable-mode picker. Practice is the only
+selectable mode today; the local 8-ball match is labelled as coming next rather than
+routing players into the retained 2D prototype. The selected non-sensitive mode preference
+is stored locally.
 
-Verified against 2022.3.62f3: EditMode 98/100, PlayMode 8/8. The two EditMode failures are
-pre-existing and both in the dual-phone remote-cue path, which the pivot deprioritises:
-`RemoteSensorInputAdapter` returns an aim direction roughly 90 degrees off what its tests
-expect. Tracked in issue #36.
+Practice now includes a mobile-safe pause shell: pause/resume freezes physics and rejects
+new touch or remote strokes, restart re-racks and resets shots/pocketed/scratch counters,
+and return-to-title restores normal time before navigating. Title, pause, remote setup,
+HUD, stroke, and elevation controls follow `Screen.safeArea` so notches and home indicators
+do not cover tappable surfaces.
+
+Headless CI always runs project-sanity checks. Unity EditMode, PlayMode, and iOS player
+jobs run only when the repository exposes a Unity license; fallback jobs say explicitly
+when those canonical checks were skipped. The dual-phone receiver path now has focused
+session/parser/runtime-wiring coverage, but successful fallback CI is not presented as a
+licensed Unity-suite result.
 
 Next up: wire the 8-ball core into a local two-player match shell, add practice drills and
 goals, replace gameplay primitives with real art, and retire the 2D stack.

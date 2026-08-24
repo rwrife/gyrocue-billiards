@@ -47,6 +47,8 @@ namespace GyroCue.Practice
 
         public bool LastShotMiscued { get; private set; }
 
+        public bool IsPaused { get; private set; }
+
         public int FirstContactBallNumber => cueBallContactTracker != null
             ? cueBallContactTracker.FirstContactBallNumber
             : EightBallShotRecord.NoBall;
@@ -108,7 +110,7 @@ namespace GyroCue.Practice
         /// <summary>Applies a stroke directly. Used by the input router and by tests.</summary>
         public bool TryTakeShot(CueStrokeSample stroke)
         {
-            if (Phase != PracticePhase.Aiming || cueBall == null)
+            if (IsPaused || Phase != PracticePhase.Aiming || cueBall == null)
             {
                 return false;
             }
@@ -132,6 +134,33 @@ namespace GyroCue.Practice
             ShotTaken?.Invoke(result);
             SessionStateChanged?.Invoke();
             return true;
+        }
+
+        public void SetPaused(bool paused)
+        {
+            if (IsPaused == paused)
+            {
+                return;
+            }
+
+            IsPaused = paused;
+            inputRouter?.SetInputLocked(paused || Phase != PracticePhase.Aiming);
+            if (paused)
+            {
+                cueStick?.SetVisible(false);
+            }
+
+            SessionStateChanged?.Invoke();
+        }
+
+        /// <summary>Re-racks and resets every practice counter for a clean new session.</summary>
+        public void RestartSession()
+        {
+            ShotsTaken = 0;
+            Scratches = 0;
+            LastShotMiscued = false;
+            cueBallContactTracker?.BeginShot();
+            RackAgain();
         }
 
         public void SpotCueBall()
@@ -186,6 +215,11 @@ namespace GyroCue.Practice
 
         private void Update()
         {
+            if (IsPaused)
+            {
+                return;
+            }
+
             UpdateCueStick();
 
             if (Phase != PracticePhase.Simulating)
@@ -277,7 +311,7 @@ namespace GyroCue.Practice
         {
             Phase = PracticePhase.Aiming;
             settledDuration = 0f;
-            inputRouter?.SetInputLocked(false);
+            inputRouter?.SetInputLocked(IsPaused);
             orbitAim?.SetFocus(cueBall != null ? cueBall.transform : null);
         }
 

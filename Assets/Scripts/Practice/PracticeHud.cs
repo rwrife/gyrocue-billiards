@@ -1,3 +1,4 @@
+using GyroCue.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -42,7 +43,13 @@ namespace GyroCue.Practice
             scaler.referenceResolution = new Vector2(1080f, 1920f);
             scaler.matchWidthOrHeight = 0.5f;
 
-            var root = (RectTransform)canvasObject.transform;
+            var canvasRoot = (RectTransform)canvasObject.transform;
+            var root = CreateChildRect("SafeArea", canvasRoot);
+            root.anchorMin = Vector2.zero;
+            root.anchorMax = Vector2.one;
+            root.offsetMin = Vector2.zero;
+            root.offsetMax = Vector2.zero;
+            root.gameObject.AddComponent<SafeAreaFitter>();
 
             statsLabel = CreateLabel("Stats", root, new Vector2(0.5f, 0.96f), 38, TextAnchor.MiddleCenter);
             strokeLabel = CreateLabel("Stroke", root, new Vector2(0.5f, 0.92f), 30, TextAnchor.MiddleCenter);
@@ -55,7 +62,7 @@ namespace GyroCue.Practice
 
         private void BuildStrokeWidget(RectTransform root)
         {
-            var rect = PracticeControlLayout.StrokeWidget;
+            var rect = PracticeControlLayout.StrokeWidgetInSafeArea;
             var panel = CreatePanel("StrokeWidget", root, rect, new Color(1f, 1f, 1f, 0.06f));
 
             // The ball face occupies the top third of the widget; below it is draw room.
@@ -86,7 +93,7 @@ namespace GyroCue.Practice
 
         private void BuildElevationStrip(RectTransform root)
         {
-            var panel = CreatePanel("ElevationStrip", root, PracticeControlLayout.ElevationStrip, new Color(1f, 1f, 1f, 0.06f));
+            var panel = CreatePanel("ElevationStrip", root, PracticeControlLayout.ElevationStripInSafeArea, new Color(1f, 1f, 1f, 0.06f));
 
             elevationFill = CreateChildRect("ElevationFill", panel);
             elevationFill.anchorMin = Vector2.zero;

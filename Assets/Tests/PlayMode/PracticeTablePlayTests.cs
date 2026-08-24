@@ -1,6 +1,7 @@
 using System.Collections;
 using GyroCue.Input;
 using GyroCue.Practice;
+using GyroCue.UI;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -29,6 +30,13 @@ namespace GyroCue.Tests.PlayMode
             session = builder != null ? builder.Session : null;
         }
 
+        [UnityTearDown]
+        public IEnumerator RestoreTimeScale()
+        {
+            Time.timeScale = 1f;
+            yield return null;
+        }
+
         [UnityTest]
         public IEnumerator PracticeScene_BuildsTableRackAndPockets()
         {
@@ -41,12 +49,47 @@ namespace GyroCue.Tests.PlayMode
             Assert.That(Object.FindObjectOfType<RemoteCueUdpReceiver>(), Is.Not.Null);
             Assert.That(Object.FindObjectOfType<RemotePracticeCueController>(), Is.Not.Null);
             Assert.That(Object.FindObjectOfType<RemoteCueSetupPanel>(), Is.Not.Null);
+            Assert.That(Object.FindObjectOfType<PracticeShellController>(), Is.Not.Null);
 
             // Everything must start resting on the cloth, not intersecting it.
             Assert.That(
                 builder.CueBall.position.y,
                 Is.EqualTo(PracticeTableLayout.BallRestHeight).Within(0.002f));
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator PauseRejectsShots_AndRestartResetsThePracticeSession()
+        {
+            var shell = Object.FindObjectOfType<PracticeShellController>();
+            var contactTracker = builder.CueBall.GetComponent<CueBallContactTracker>();
+            Assert.That(shell, Is.Not.Null);
+            Assert.That(session.TryTakeShot(new CueStrokeSample(0.5f, Vector2.zero, 8f)), Is.True);
+            Assert.That(contactTracker.TryRecordContact(builder.ObjectBalls[0].GetComponent<BallIdentity>()), Is.True);
+            Assert.That(session.FirstContactBallNumber, Is.EqualTo(1));
+            Assert.That(session.ShotsTaken, Is.EqualTo(1));
+
+            shell.Pause();
+            yield return null;
+
+            Assert.That(shell.IsPaused, Is.True);
+            Assert.That(session.IsPaused, Is.True);
+            Assert.That(RemotePracticeCueController.CanProcessFrame(session), Is.False);
+            Assert.That(Time.timeScale, Is.EqualTo(0f));
+            Assert.That(session.TryTakeShot(new CueStrokeSample(0.5f, Vector2.zero, 8f)), Is.False);
+
+            shell.RestartPractice();
+            yield return null;
+
+            Assert.That(shell.IsPaused, Is.False);
+            Assert.That(session.IsPaused, Is.False);
+            Assert.That(Time.timeScale, Is.EqualTo(1f));
+            Assert.That(session.Phase, Is.EqualTo(PracticePhase.Aiming));
+            Assert.That(session.ShotsTaken, Is.Zero);
+            Assert.That(session.BallsPocketed, Is.Zero);
+            Assert.That(session.Scratches, Is.Zero);
+            Assert.That(session.FirstContactBallNumber, Is.EqualTo(EightBallShotRecord.NoBall));
+            Assert.That(session.BallsRemaining, Is.EqualTo(PracticeTableLayout.RackBallCount));
         }
 
         [UnityTest]

@@ -63,9 +63,16 @@ namespace GyroCue.Input
             }
         }
 
+        public static bool CanProcessFrame(PracticeSessionController practiceSession)
+        {
+            return practiceSession != null &&
+                   !practiceSession.IsPaused &&
+                   practiceSession.Phase == PracticePhase.Aiming;
+        }
+
         private void HandleFrameReceived(RemoteCueSensorFrame frame)
         {
-            if (adapter == null || session == null || session.Phase != PracticePhase.Aiming)
+            if (adapter == null || !CanProcessFrame(session))
             {
                 return;
             }
