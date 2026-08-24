@@ -1,3 +1,4 @@
+using GyroCue.UI;
 using UnityEngine;
 
 namespace GyroCue.Practice
@@ -8,11 +9,23 @@ namespace GyroCue.Practice
     /// </summary>
     public static class PracticeControlLayout
     {
-        /// <summary>Ball-face widget: draw down inside it, then stroke up.</summary>
-        public static Rect StrokeWidget => new Rect(0.30f, 0.02f, 0.40f, 0.34f);
+        /// <summary>Ball-face widget within the safe-area canvas: draw down, then stroke up.</summary>
+        public static Rect StrokeWidgetInSafeArea => new Rect(0.30f, 0.02f, 0.40f, 0.34f);
 
-        /// <summary>Vertical strip for cue elevation.</summary>
-        public static Rect ElevationStrip => new Rect(0.88f, 0.15f, 0.10f, 0.55f);
+        /// <summary>Vertical cue-elevation strip within the safe-area canvas.</summary>
+        public static Rect ElevationStripInSafeArea => new Rect(0.88f, 0.15f, 0.10f, 0.55f);
+
+        /// <summary>Screen viewport hit region that follows notches and home indicators.</summary>
+        public static Rect StrokeWidget => SafeAreaLayout.MapLocalViewportRect(
+            StrokeWidgetInSafeArea,
+            Screen.safeArea,
+            new Vector2(Screen.width, Screen.height));
+
+        /// <summary>Screen viewport hit region that follows notches and home indicators.</summary>
+        public static Rect ElevationStrip => SafeAreaLayout.MapLocalViewportRect(
+            ElevationStripInSafeArea,
+            Screen.safeArea,
+            new Vector2(Screen.width, Screen.height));
 
         public const float MaximumElevationDegrees = 70f;
 

@@ -1,3 +1,4 @@
+using GyroCue.UI;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -110,8 +111,18 @@ namespace GyroCue.Input
             scaler.referenceResolution = new Vector2(1080f, 1920f);
             scaler.matchWidthOrHeight = 0.5f;
 
+            var canvasRect = (RectTransform)canvasObject.transform;
+            var safeRoot = new GameObject("SafeArea", typeof(RectTransform));
+            safeRoot.transform.SetParent(canvasRect, false);
+            var safeRect = (RectTransform)safeRoot.transform;
+            safeRect.anchorMin = Vector2.zero;
+            safeRect.anchorMax = Vector2.one;
+            safeRect.offsetMin = Vector2.zero;
+            safeRect.offsetMax = Vector2.zero;
+            safeRoot.AddComponent<SafeAreaFitter>();
+
             var panel = new GameObject("Panel", typeof(RectTransform), typeof(Image));
-            panel.transform.SetParent(canvasObject.transform, false);
+            panel.transform.SetParent(safeRect, false);
             var panelRect = (RectTransform)panel.transform;
             panelRect.anchorMin = new Vector2(0f, 1f);
             panelRect.anchorMax = new Vector2(0f, 1f);

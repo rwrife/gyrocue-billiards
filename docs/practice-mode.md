@@ -123,6 +123,18 @@ roll.
   no ball-in-hand, because there is no opponent to give it to.
 - Clearing the rack re-racks it.
 - Input is locked while balls are moving and unlocks once the table settles.
+- Pause freezes the table and rejects both touch and remote strokes until resume.
+- Restart creates a clean practice session: full rack, cue ball spotted, and shots,
+  pocketed balls, scratches, and last-miscue state reset.
+
+`PracticeShellController` builds a safe-area-aware PAUSE button and overlay at runtime.
+The overlay offers resume, restart practice, and return to title; it deliberately does
+not pretend practice has a win/loss replay state. A terminal replay surface belongs to
+the future 3D local-match mode when that mode consumes the existing 8-ball rules core.
+
+All runtime canvases and the touch hit regions use `Screen.safeArea`. The stroke widget
+and elevation strip are defined inside the safe-area viewport, so the visual widgets and
+input routing stay aligned around notches and home indicators.
 
 The runtime-built balls now carry stable `BallIdentity` numbers and use the standard
 `EightBallRack` order. A `CueBallContactTracker` records the first object-ball contact for
@@ -133,13 +145,15 @@ those physical identity/contact hooks with the 3D local-match rules described in
 ## Tests
 
 - **EditMode** — `CueStrikeMathTests`, `CueStrokeGestureTests`, `PracticeTableLayoutTests`,
-  `PracticeControlLayoutTests`, and `EightBallRulesTests` cover the pure strike physics,
-  stroke state machine, layout tables, numbered rack, group assignment, foul/terminal
-  outcomes, reset, and first-contact capture.
+  `PracticeControlLayoutTests`, `SafeAreaLayoutTests`, `GameFlowStateTests`, and
+  `EightBallRulesTests` cover the pure strike physics, stroke state machine, table and
+  safe-area layout, title/start/pause/resume/restart transitions, numbered rack, group
+  assignment, foul/terminal outcomes, reset, and first-contact capture.
 - **PlayMode** — `PracticeTablePlayTests` loads the real scene and checks that it builds,
-  that a shot settles without balls escaping the table, that a draw shot pulls the cue
-  ball back behind the contact point, that an elevated high strike clears a full ball
-  radius and lands again, and that a scratch spots the cue ball.
+  that pause rejects shots and restart resets the full session, that a shot settles
+  without balls escaping the table, that a draw shot pulls the cue ball back behind the
+  contact point, that an elevated high strike clears a full ball radius and lands again,
+  and that a scratch spots the cue ball.
 
 Run them headlessly (the editor holds a lock on the project, so use a copy):
 

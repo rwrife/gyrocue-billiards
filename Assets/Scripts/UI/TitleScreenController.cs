@@ -5,10 +5,7 @@ using UnityEngine.UI;
 
 namespace GyroCue.UI
 {
-    /// <summary>
-    /// Headless-safe title screen copy, kept apart from UI construction so the wording
-    /// stays verifiable in edit mode.
-    /// </summary>
+    /// <summary>Headless-safe title copy, kept apart from runtime UI construction.</summary>
     public static class TitleScreenCopy
     {
         public const string MissingSceneHint = "Gameplay scene is missing from Build Settings.";
@@ -28,28 +25,19 @@ namespace GyroCue.UI
         }
     }
 
-    /// <summary>
-    /// Self-contained title screen that builds its own canvas at runtime.
-    ///
-    /// Nothing needs wiring in the inspector: drop this component on an empty
-    /// GameObject and press play. It exists so the project has one scene that
-    /// visibly runs while table gameplay is still placeholder geometry.
-    /// </summary>
+    /// <summary>Runtime-built, safe-area-aware title and honest playable-mode picker.</summary>
     public sealed class TitleScreenController : MonoBehaviour
     {
         private const int ReferenceWidthPixels = 1080;
         private const int ReferenceHeightPixels = 1920;
-
-        [Header("Navigation")]
-        [SerializeField]
-        private string gameplaySceneName = "Practice";
+        private const string SelectedModePreference = "gyrocue.selected-mode";
 
         [Header("Copy")]
         [SerializeField]
         private string titleText = "GYROCUE";
 
         [SerializeField]
-        private string subtitleText = "Practice Mode";
+        private string subtitleText = "Mobile Billiards";
 
         [Header("Palette")]
         [SerializeField]
@@ -58,13 +46,17 @@ namespace GyroCue.UI
         [SerializeField]
         private Color accentColor = new Color(0.36f, 0.78f, 0.52f, 1f);
 
+        private readonly GameFlowState flow = new GameFlowState();
         private Text statusLabel;
+        private Text practiceModeLabel;
 
         private void Awake()
         {
             EnsureEventSystem();
+            flow.SelectMode(GameModeCatalog.FromPersistedValue(
+                PlayerPrefs.GetInt(SelectedModePreference, (int)GameMode.Practice)));
             BuildCanvas();
-            RefreshStatusLabel();
+            RefreshLabels();
         }
 
         private void BuildCanvas()
@@ -82,31 +74,60 @@ namespace GyroCue.UI
             scaler.matchWidthOrHeight = 0.5f;
 
             var canvasRect = (RectTransform)canvasObject.transform;
-
             var background = CreateChild("Background", canvasRect);
             Stretch(background);
             AddImage(background, backgroundColor);
 
-            var title = CreateText("Title", canvasRect, titleText, 120, FontStyle.Bold, Color.white);
-            Anchor(title, new Vector2(0.5f, 0.72f), new Vector2(900f, 200f));
+            var safeRoot = CreateChild("SafeArea", canvasRect);
+            Stretch(safeRoot);
+            safeRoot.gameObject.AddComponent<SafeAreaFitter>();
 
-            var subtitle = CreateText("Subtitle", canvasRect, subtitleText, 52, FontStyle.Normal, accentColor);
-            Anchor(subtitle, new Vector2(0.5f, 0.63f), new Vector2(900f, 120f));
+            var title = CreateText("Title", safeRoot, titleText, 120, FontStyle.Bold, Color.white);
+            Anchor(title, new Vector2(0.5f, 0.78f), new Vector2(900f, 200f));
 
-            BuildPlayButton(canvasRect);
+            var subtitle = CreateText("Subtitle", safeRoot, subtitleText, 52, FontStyle.Normal, accentColor);
+            Anchor(subtitle, new Vector2(0.5f, 0.69f), new Vector2(900f, 120f));
 
-            var status = CreateText("Status", canvasRect, string.Empty, 36, FontStyle.Normal, new Color(1f, 1f, 1f, 0.7f));
-            Anchor(status, new Vector2(0.5f, 0.16f), new Vector2(960f, 120f));
+            var modeHeading = CreateText("ModeHeading", safeRoot, "SELECT MODE", 32, FontStyle.Bold, Color.white);
+            Anchor(modeHeading, new Vector2(0.5f, 0.57f), new Vector2(900f, 80f));
+
+            BuildPracticeModeButton(safeRoot);
+
+            var comingSoon = CreateText(
+                "ComingSoon",
+                safeRoot,
+                "LOCAL 8-BALL  •  COMING NEXT",
+                30,
+                FontStyle.Normal,
+                new Color(1f, 1f, 1f, 0.48f));
+            Anchor(comingSoon, new Vector2(0.5f, 0.43f), new Vector2(820f, 80f));
+
+            BuildPlayButton(safeRoot);
+
+            var status = CreateText("Status", safeRoot, string.Empty, 34, FontStyle.Normal, new Color(1f, 1f, 1f, 0.72f));
+            Anchor(status, new Vector2(0.5f, 0.14f), new Vector2(960f, 120f));
             statusLabel = status.GetComponent<Text>();
         }
 
-        private void BuildPlayButton(RectTransform canvasRect)
+        private void BuildPracticeModeButton(RectTransform parent)
         {
-            var buttonRect = CreateChild("PlayButton", canvasRect);
-            Anchor(buttonRect, new Vector2(0.5f, 0.42f), new Vector2(520f, 160f));
+            var buttonRect = CreateChild("PracticeModeButton", parent);
+            Anchor(buttonRect, new Vector2(0.5f, 0.50f), new Vector2(720f, 110f));
+            var image = AddImage(buttonRect, new Color(accentColor.r, accentColor.g, accentColor.b, 0.28f));
+            var button = buttonRect.gameObject.AddComponent<Button>();
+            button.targetGraphic = image;
+            button.onClick.AddListener(HandlePracticeSelected);
 
+            var label = CreateText("Label", buttonRect, string.Empty, 40, FontStyle.Bold, Color.white);
+            Stretch(label);
+            practiceModeLabel = label.GetComponent<Text>();
+        }
+
+        private void BuildPlayButton(RectTransform parent)
+        {
+            var buttonRect = CreateChild("PlayButton", parent);
+            Anchor(buttonRect, new Vector2(0.5f, 0.30f), new Vector2(520f, 150f));
             var image = AddImage(buttonRect, accentColor);
-
             var button = buttonRect.gameObject.AddComponent<Button>();
             button.targetGraphic = image;
             button.onClick.AddListener(HandlePlayClicked);
@@ -115,44 +136,59 @@ namespace GyroCue.UI
             Stretch(label);
         }
 
+        private void HandlePracticeSelected()
+        {
+            if (flow.SelectMode(GameMode.Practice))
+            {
+                PlayerPrefs.SetInt(SelectedModePreference, (int)flow.SelectedMode);
+                PlayerPrefs.Save();
+                RefreshLabels();
+            }
+        }
+
         private void HandlePlayClicked()
         {
-            if (!IsGameplaySceneAvailable())
+            var sceneName = GameModeCatalog.SceneName(flow.SelectedMode);
+            if (!IsSceneAvailable(sceneName))
             {
-                Debug.LogError(
-                    $"{nameof(TitleScreenController)}: scene '{gameplaySceneName}' is not in Build Settings.",
-                    this);
-                RefreshStatusLabel();
+                Debug.LogError($"{nameof(TitleScreenController)}: scene '{sceneName}' is not in Build Settings.", this);
+                RefreshLabels();
                 return;
             }
 
-            SceneManager.LoadScene(gameplaySceneName);
+            if (flow.StartSelectedMode())
+            {
+                SceneManager.LoadScene(sceneName);
+            }
         }
 
-        private void RefreshStatusLabel()
+        private void RefreshLabels()
         {
-            if (statusLabel == null)
+            var sceneName = GameModeCatalog.SceneName(flow.SelectedMode);
+            if (practiceModeLabel != null)
             {
-                return;
+                practiceModeLabel.text = flow.SelectedMode == GameMode.Practice
+                    ? "✓  PRACTICE"
+                    : "PRACTICE";
             }
 
-            statusLabel.text = TitleScreenCopy.ResolveStartPrompt(IsGameplaySceneAvailable(), gameplaySceneName);
+            if (statusLabel != null)
+            {
+                statusLabel.text = TitleScreenCopy.ResolveStartPrompt(IsSceneAvailable(sceneName), sceneName);
+            }
         }
 
-        private bool IsGameplaySceneAvailable()
+        private static bool IsSceneAvailable(string sceneName)
         {
-            return !string.IsNullOrWhiteSpace(gameplaySceneName)
-                && Application.CanStreamedLevelBeLoaded(gameplaySceneName);
+            return !string.IsNullOrWhiteSpace(sceneName) && Application.CanStreamedLevelBeLoaded(sceneName);
         }
 
         private static void EnsureEventSystem()
         {
-            if (EventSystem.current != null)
+            if (EventSystem.current == null)
             {
-                return;
+                new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             }
-
-            new GameObject("EventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
         }
 
         private static RectTransform CreateChild(string name, Transform parent)
@@ -162,16 +198,9 @@ namespace GyroCue.UI
             return (RectTransform)child.transform;
         }
 
-        private static RectTransform CreateText(
-            string name,
-            Transform parent,
-            string content,
-            int fontSize,
-            FontStyle fontStyle,
-            Color color)
+        private static RectTransform CreateText(string name, Transform parent, string content, int fontSize, FontStyle fontStyle, Color color)
         {
             var rect = CreateChild(name, parent);
-
             var text = rect.gameObject.AddComponent<Text>();
             text.font = ResolveFont();
             text.text = content;
@@ -181,7 +210,6 @@ namespace GyroCue.UI
             text.alignment = TextAnchor.MiddleCenter;
             text.horizontalOverflow = HorizontalWrapMode.Overflow;
             text.verticalOverflow = VerticalWrapMode.Overflow;
-
             return rect;
         }
 
@@ -211,7 +239,6 @@ namespace GyroCue.UI
 
         private static Font ResolveFont()
         {
-            // Unity 2022 ships LegacyRuntime.ttf as the built-in UI.Text font.
             var font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             return font != null ? font : Font.CreateDynamicFontFromOSFont("Arial", 32);
         }
