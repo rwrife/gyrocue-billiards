@@ -51,6 +51,19 @@ namespace GyroCue.Tests.PlayMode
             Assert.That(Object.FindObjectOfType<RemoteCueSetupPanel>(), Is.Not.Null);
             Assert.That(Object.FindObjectOfType<PracticeShellController>(), Is.Not.Null);
 
+            var feedback = Object.FindObjectOfType<PracticeFeedbackController>();
+            Assert.That(feedback, Is.Not.Null, "Practice feedback controller was not built.");
+            Assert.That(feedback.AvailableCueCount, Is.EqualTo(6));
+            Assert.That(
+                Object.FindObjectsOfType<PracticeCollisionFeedbackReporter>().Length,
+                Is.EqualTo(PracticeTableLayout.RackBallCount + 1),
+                "Every ball should report ball/cushion contacts.");
+
+            var feedbackCanvas = GameObject.Find("PracticeFeedbackVisual").GetComponent<Canvas>();
+            var feedbackFlash = GameObject.Find("FeedbackFlash").GetComponent<UnityEngine.UI.Image>();
+            Assert.That(feedbackCanvas.sortingOrder, Is.LessThan(0), "Feedback flash must render behind every control canvas.");
+            Assert.That(feedbackFlash.raycastTarget, Is.False, "Feedback flash must not intercept touch input.");
+
             // Everything must start resting on the cloth, not intersecting it.
             Assert.That(
                 builder.CueBall.position.y,
@@ -90,6 +103,43 @@ namespace GyroCue.Tests.PlayMode
             Assert.That(session.Scratches, Is.Zero);
             Assert.That(session.FirstContactBallNumber, Is.EqualTo(EightBallShotRecord.NoBall));
             Assert.That(session.BallsRemaining, Is.EqualTo(PracticeTableLayout.RackBallCount));
+        }
+
+        [UnityTest]
+        public IEnumerator FeedbackSettings_PersistAndReducedModeSuppressesHaptics()
+        {
+            var feedback = Object.FindObjectOfType<PracticeFeedbackController>();
+            var shell = Object.FindObjectOfType<PracticeShellController>();
+            Assert.That(feedback, Is.Not.Null);
+            Assert.That(shell, Is.Not.Null);
+
+            feedback.SetSoundEnabled(true);
+            feedback.SetHapticsEnabled(true);
+            feedback.SetReducedFeedback(false);
+            Assert.That(feedback.TryPulseVisual(PracticeFeedbackCue.Pocket, 1f), Is.True);
+            Assert.That(feedback.CurrentVisualIntensity, Is.GreaterThan(0f));
+            shell.Pause();
+            shell.ToggleSound();
+            shell.ToggleReducedFeedback();
+            yield return null;
+
+            Assert.That(feedback.Options.SoundEnabled, Is.False);
+            Assert.That(feedback.Options.HapticsEnabled, Is.True);
+            Assert.That(feedback.Options.HapticsAllowed, Is.False);
+            Assert.That(feedback.CurrentVisualIntensity, Is.Zero);
+            Assert.That(feedback.TryPulseVisual(PracticeFeedbackCue.Miscue, 1f), Is.False);
+            Assert.That(PracticeFeedbackPreferences.Load().ReducedFeedback, Is.True);
+            Assert.That(
+                GameObject.Find("SoundButton").GetComponentInChildren<UnityEngine.UI.Text>().text,
+                Is.EqualTo("SOUND: OFF"));
+            Assert.That(
+                GameObject.Find("HapticsButton").GetComponentInChildren<UnityEngine.UI.Text>().text,
+                Is.EqualTo("HAPTICS: OFF (REDUCED)"));
+
+            feedback.SetSoundEnabled(true);
+            feedback.SetReducedFeedback(false);
+            shell.Resume();
+            yield return null;
         }
 
         [UnityTest]
