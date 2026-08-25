@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace GyroCue.Practice
@@ -36,6 +37,9 @@ namespace GyroCue.Practice
         private float stopAngularSpeed = 0.35f;
 
         private Rigidbody body;
+        private readonly LandingFeedbackState landingFeedback = new LandingFeedbackState();
+
+        public event Action<float> Landed;
 
         public bool IsGrounded { get; private set; }
 
@@ -63,6 +67,10 @@ namespace GyroCue.Practice
 
             var deltaTime = Time.fixedDeltaTime;
             IsGrounded = transform.position.y <= ballRadius * 1.05f && Mathf.Abs(body.velocity.y) < 0.35f;
+            if (landingFeedback.Observe(IsGrounded, body.velocity.y, out var landingIntensity))
+            {
+                Landed?.Invoke(landingIntensity);
+            }
 
             if (!IsGrounded)
             {

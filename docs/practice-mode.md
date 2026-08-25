@@ -136,6 +136,22 @@ All runtime canvases and the touch hit regions use `Screen.safeArea`. The stroke
 and elevation strip are defined inside the safe-area viewport, so the visual widgets and
 input routing stay aligned around notches and home indicators.
 
+## Optional feedback and accessibility
+
+`PracticeFeedbackController` generates six short clips at runtime, so cue strike,
+ball-to-ball contact, cushion contact, pocketing, miscue, and jump-shot landing feedback
+remain source-controlled without binary audio assets. Cue-strike volume follows the
+original `CueStrokeSample.Power01`; contact and landing cues use lower mix ceilings and
+per-cue debounce windows so a break does not become a wall of sound. The same events
+can produce a brief low-alpha color pulse behind the controls as nonessential visual
+feedback.
+
+The pause surface persists three local toggles: sound, haptics, and reduced feedback.
+Haptics are requested only for stroke release, pocketing, and miscues on supported iOS
+and Android players. Reduced feedback immediately suppresses haptics and opts out of
+nonessential visual feedback while retaining the user's stored haptics preference for
+when reduced mode is turned off. Editor and unsupported-device paths remain no-op safe.
+
 The runtime-built balls now carry stable `BallIdentity` numbers and use the standard
 `EightBallRack` order. A `CueBallContactTracker` records the first object-ball contact for
 each stroke. Practice deliberately ignores match turns and terminal results, but shares
@@ -145,15 +161,17 @@ those physical identity/contact hooks with the 3D local-match rules described in
 ## Tests
 
 - **EditMode** — `CueStrikeMathTests`, `CueStrokeGestureTests`, `PracticeTableLayoutTests`,
-  `PracticeControlLayoutTests`, `SafeAreaLayoutTests`, `GameFlowStateTests`, and
-  `EightBallRulesTests` cover the pure strike physics, stroke state machine, table and
-  safe-area layout, title/start/pause/resume/restart transitions, numbered rack, group
-  assignment, foul/terminal outcomes, reset, and first-contact capture.
+  `PracticeControlLayoutTests`, `SafeAreaLayoutTests`, `GameFlowStateTests`,
+  `PracticeFeedbackSettingsTests`, and `EightBallRulesTests` cover the pure strike
+  physics, stroke state machine, table and safe-area layout, title/start/pause/resume/
+  restart transitions, feedback persistence/mix/debounce/landing transitions, numbered
+  rack, group assignment, foul/terminal outcomes, reset, and first-contact capture.
 - **PlayMode** — `PracticeTablePlayTests` loads the real scene and checks that it builds,
-  that pause rejects shots and restart resets the full session, that a shot settles
-  without balls escaping the table, that a draw shot pulls the cue ball back behind the
-  contact point, that an elevated high strike clears a full ball radius and lands again,
-  and that a scratch spots the cue ball.
+  including all feedback reporters and generated cues; that feedback settings persist
+  and reduced mode suppresses haptics; that pause rejects shots and restart resets the
+  full session; that a shot settles without balls escaping the table; that a draw shot
+  pulls the cue ball back behind the contact point; that an elevated high strike clears
+  a full ball radius and lands again; and that a scratch spots the cue ball.
 
 Run them headlessly (the editor holds a lock on the project, so use a copy):
 

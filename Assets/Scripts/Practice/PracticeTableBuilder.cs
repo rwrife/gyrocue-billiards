@@ -251,6 +251,7 @@ namespace GyroCue.Practice
 
             ball.AddComponent<BallIdentity>().Configure(ballNumber);
             ball.AddComponent<ClothContactMotion>().Configure(radius);
+            ball.AddComponent<PracticeCollisionFeedbackReporter>();
             return body;
         }
 
@@ -282,7 +283,12 @@ namespace GyroCue.Practice
             Session = gameObject.AddComponent<PracticeSessionController>();
             Session.Configure(CueBall, objectBalls, pockets, router, orbit, cueStick);
 
-            gameObject.AddComponent<PracticeShellController>().Configure(Session);
+            var feedbackBalls = new List<Rigidbody>(objectBalls.Count + 1) { CueBall };
+            feedbackBalls.AddRange(objectBalls);
+            var feedback = gameObject.AddComponent<PracticeFeedbackController>();
+            feedback.Configure(Session, feedbackBalls, pockets);
+
+            gameObject.AddComponent<PracticeShellController>().Configure(Session, feedback);
             gameObject.AddComponent<PracticeHud>().Configure(Session, router, orbit);
 
             var remoteAdapter = gameObject.AddComponent<RemoteSensorInputAdapter>();

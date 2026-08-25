@@ -35,6 +35,9 @@ namespace GyroCue.Practice
 
         public event Action<CueStrikeResult> ShotTaken;
 
+        /// <summary>Includes the original normalized stroke power for feedback scaling.</summary>
+        public event Action<CueStrikeResult, float> ShotFeedbackRequested;
+
         public event Action SessionStateChanged;
 
         public PracticePhase Phase { get; private set; } = PracticePhase.Aiming;
@@ -132,6 +135,7 @@ namespace GyroCue.Practice
             LastShotMiscued = result.IsMiscue;
             EnterSimulation();
             ShotTaken?.Invoke(result);
+            ShotFeedbackRequested?.Invoke(result, stroke.Power01);
             SessionStateChanged?.Invoke();
             return true;
         }

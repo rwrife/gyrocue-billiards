@@ -14,7 +14,11 @@ namespace GyroCue.UI
 
         private readonly GameFlowState flow = new GameFlowState();
         private PracticeSessionController session;
+        private PracticeFeedbackController feedback;
         private GameObject pauseOverlay;
+        private Text soundLabel;
+        private Text hapticsLabel;
+        private Text reducedFeedbackLabel;
 
         public GameFlowState Flow => flow;
 
@@ -29,9 +33,23 @@ namespace GyroCue.UI
             BuildCanvas();
         }
 
-        public void Configure(PracticeSessionController sessionController)
+        public void Configure(
+            PracticeSessionController sessionController,
+            PracticeFeedbackController feedbackController)
         {
             session = sessionController;
+            if (feedback != null)
+            {
+                feedback.OptionsChanged -= RefreshFeedbackLabels;
+            }
+
+            feedback = feedbackController;
+            if (feedback != null)
+            {
+                feedback.OptionsChanged += RefreshFeedbackLabels;
+            }
+
+            RefreshFeedbackLabels();
         }
 
         public void Pause()
@@ -71,6 +89,30 @@ namespace GyroCue.UI
             SetOverlayVisible(false);
         }
 
+        public void ToggleSound()
+        {
+            if (feedback != null)
+            {
+                feedback.SetSoundEnabled(!feedback.Options.SoundEnabled);
+            }
+        }
+
+        public void ToggleHaptics()
+        {
+            if (feedback != null)
+            {
+                feedback.SetHapticsEnabled(!feedback.Options.HapticsEnabled);
+            }
+        }
+
+        public void ToggleReducedFeedback()
+        {
+            if (feedback != null)
+            {
+                feedback.SetReducedFeedback(!feedback.Options.ReducedFeedback);
+            }
+        }
+
         public void ReturnToTitle()
         {
             if (!Application.CanStreamedLevelBeLoaded(TitleSceneName))
@@ -87,6 +129,11 @@ namespace GyroCue.UI
 
         private void OnDestroy()
         {
+            if (feedback != null)
+            {
+                feedback.OptionsChanged -= RefreshFeedbackLabels;
+            }
+
             if (Time.timeScale == 0f)
             {
                 Time.timeScale = 1f;
@@ -131,15 +178,49 @@ namespace GyroCue.UI
             overlaySafe.gameObject.AddComponent<SafeAreaFitter>();
 
             var heading = CreateText("Heading", overlaySafe, "PRACTICE PAUSED", 64, FontStyle.Bold);
-            Anchor(heading, new Vector2(0.5f, 0.68f), Vector2.zero, new Vector2(900f, 120f));
-            var note = CreateText("Note", overlaySafe, "The table is frozen. Choose where to continue.", 30, FontStyle.Normal);
-            Anchor(note, new Vector2(0.5f, 0.61f), Vector2.zero, new Vector2(960f, 100f));
+            Anchor(heading, new Vector2(0.5f, 0.78f), Vector2.zero, new Vector2(900f, 120f));
+            var note = CreateText("Note", overlaySafe, "Feedback choices are saved on this phone.", 30, FontStyle.Normal);
+            Anchor(note, new Vector2(0.5f, 0.71f), Vector2.zero, new Vector2(960f, 100f));
 
-            CreateButton("ResumeButton", overlaySafe, new Vector2(0.5f, 0.48f), Vector2.zero, new Vector2(620f, 128f), "RESUME", Resume);
-            CreateButton("RestartButton", overlaySafe, new Vector2(0.5f, 0.38f), Vector2.zero, new Vector2(620f, 128f), "RESTART PRACTICE", RestartPractice);
-            CreateButton("TitleButton", overlaySafe, new Vector2(0.5f, 0.28f), Vector2.zero, new Vector2(620f, 128f), "RETURN TO TITLE", ReturnToTitle);
+            soundLabel = CreateButton("SoundButton", overlaySafe, new Vector2(0.5f, 0.60f), Vector2.zero, new Vector2(720f, 100f), "SOUND: ON", ToggleSound)
+                .GetComponentInChildren<Text>();
+            hapticsLabel = CreateButton("HapticsButton", overlaySafe, new Vector2(0.5f, 0.52f), Vector2.zero, new Vector2(720f, 100f), "HAPTICS: ON", ToggleHaptics)
+                .GetComponentInChildren<Text>();
+            reducedFeedbackLabel = CreateButton("ReducedFeedbackButton", overlaySafe, new Vector2(0.5f, 0.44f), Vector2.zero, new Vector2(720f, 100f), "REDUCED FEEDBACK: OFF", ToggleReducedFeedback)
+                .GetComponentInChildren<Text>();
 
+            CreateButton("ResumeButton", overlaySafe, new Vector2(0.5f, 0.32f), Vector2.zero, new Vector2(620f, 108f), "RESUME", Resume);
+            CreateButton("RestartButton", overlaySafe, new Vector2(0.5f, 0.22f), Vector2.zero, new Vector2(620f, 108f), "RESTART PRACTICE", RestartPractice);
+            CreateButton("TitleButton", overlaySafe, new Vector2(0.5f, 0.12f), Vector2.zero, new Vector2(620f, 108f), "RETURN TO TITLE", ReturnToTitle);
+
+            RefreshFeedbackLabels();
             pauseOverlay.SetActive(false);
+        }
+
+        private void RefreshFeedbackLabels()
+        {
+            var options = feedback != null
+                ? feedback.Options
+                : new PracticeFeedbackOptions(soundEnabled: true, hapticsEnabled: true, reducedFeedback: false);
+
+            if (soundLabel != null)
+            {
+                soundLabel.text = options.SoundEnabled ? "SOUND: ON" : "SOUND: OFF";
+            }
+
+            if (hapticsLabel != null)
+            {
+                hapticsLabel.text = options.ReducedFeedback
+                    ? "HAPTICS: OFF (REDUCED)"
+                    : options.HapticsEnabled ? "HAPTICS: ON" : "HAPTICS: OFF";
+            }
+
+            if (reducedFeedbackLabel != null)
+            {
+                reducedFeedbackLabel.text = options.ReducedFeedback
+                    ? "REDUCED FEEDBACK: ON"
+                    : "REDUCED FEEDBACK: OFF";
+            }
         }
 
         private void SetOverlayVisible(bool visible)
