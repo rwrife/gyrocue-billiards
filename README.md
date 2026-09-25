@@ -87,6 +87,10 @@ licensed Unity-suite result.
 Next up: wire the 8-ball core into a local two-player match shell, add practice drills and
 goals, replace gameplay primitives with real art, and retire the 2D stack.
 
+See **[docs/roadmap-to-launch.md](docs/roadmap-to-launch.md)** for the full plan from here to
+a shippable, AAA-presentation game, including iPhone Duo (Apple's foldable, announced
+September 2026) support for a wider table view on the unfolded display.
+
 ## CI Pipeline (Issue #15)
 A GitHub Actions workflow now lives at `.github/workflows/unity-ci.yml` and runs on push + pull request.
 
