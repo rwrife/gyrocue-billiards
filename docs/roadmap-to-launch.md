@@ -229,25 +229,36 @@ part (Phase 4/Phase B) lands once Apple's own tooling has stabilized.
 - **Art budget/source**: `man-cave-asset-list.md` assumes purchased store assets; confirm
   budget and preferred asset store(s) before Phase 3 starts.
 
-## 7. Suggested issue breakdown
+## 7. Issue breakdown
 
-If tracked as GitHub issues (matching this repo's existing one-issue-per-feature convention),
-Phase 0-2 alone breaks into roughly:
+Phase 0-2 is filed as GitHub issues, matching this repo's existing one-issue-per-feature
+convention:
 
-1. Wire `UNITY_LICENSE`/`UNITY_EMAIL`/`UNITY_PASSWORD` secrets and confirm EditMode+PlayMode
-   CI jobs run for real.
-2. Local two-player pass-and-play match shell consuming `EightBallRules`.
-3. Win/loss screen + return-to-title/rematch flow off the match shell.
-4. Minimal single-player-vs-AI opponent.
-5. Retire `MainTable.unity` and the `Rigidbody2D`/2D input stack.
-6. `AdaptiveDisplayController` + `DisplayProfile` classification with EditMode coverage at
-   representative Compact/Expanded logical resolutions.
-7. Profile-aware `OrbitAimController` framing (camera pulls back/widens on Expanded).
-8. Profile-aware `PracticeControlLayout` widget sizing.
-9. Expanded-only ball-tracker/shot-history side panel.
-10. iOS resizable-window Player Settings + build sanity check in CI.
-11. Hit-stop/camera shake/haptic-ramp game-feel pass.
-12. App icon, launch screen, signing/provisioning documentation, TestFlight pipeline doc.
+1. [#47](https://github.com/rwrife/gyrocue-billiards/issues/47) — Wire `UNITY_LICENSE`/
+   `UNITY_EMAIL`/`UNITY_PASSWORD` secrets and confirm EditMode+PlayMode CI jobs run for real.
+2. [#48](https://github.com/rwrife/gyrocue-billiards/issues/48) — Local two-player
+   pass-and-play match shell consuming `EightBallRules`.
+3. [#49](https://github.com/rwrife/gyrocue-billiards/issues/49) — Win/loss screen +
+   return-to-title/rematch flow off the match shell.
+4. [#50](https://github.com/rwrife/gyrocue-billiards/issues/50) — Minimal
+   single-player-vs-AI opponent.
+5. [#51](https://github.com/rwrife/gyrocue-billiards/issues/51) — Retire `MainTable.unity`
+   and the `Rigidbody2D`/2D input stack.
+6. [#52](https://github.com/rwrife/gyrocue-billiards/issues/52) — `AdaptiveDisplayController`
+   + `DisplayProfile` classification with EditMode coverage at representative
+   Compact/Expanded logical resolutions.
+7. [#53](https://github.com/rwrife/gyrocue-billiards/issues/53) — Profile-aware
+   `OrbitAimController` framing (camera pulls back/widens on Expanded).
+8. [#54](https://github.com/rwrife/gyrocue-billiards/issues/54) — Profile-aware
+   `PracticeControlLayout` widget sizing.
+9. [#55](https://github.com/rwrife/gyrocue-billiards/issues/55) — Expanded-only
+   ball-tracker/shot-history side panel.
+10. [#56](https://github.com/rwrife/gyrocue-billiards/issues/56) — iOS resizable-window
+    Player Settings + build sanity check in CI.
+11. [#57](https://github.com/rwrife/gyrocue-billiards/issues/57) — Hit-stop/camera
+    shake/haptic-ramp game-feel pass.
+12. [#58](https://github.com/rwrife/gyrocue-billiards/issues/58) — App icon, launch screen,
+    signing/provisioning documentation, TestFlight pipeline doc.
 
-Phases 3-5 are intentionally left less granular here since their scope depends on the answers
-in Section 6 (art budget, platform scope).
+Phases 3-5 are intentionally left less granular since their scope depends on the answers in
+Section 6 (art budget, platform scope); file them once those are answered.
